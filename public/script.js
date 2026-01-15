@@ -789,10 +789,12 @@ function renderOrderCards(orders) {
         status(`Found ${movements.length} item(s)`, 'success');
         logToConsole(`Loaded ${movements.length} inventory movement(s)`, 'success');
         
-        // Store sourceLocationId and locationId for review API call
+        // Store sourceLocationId, locationId, and orderStatus for review API call
         if (movementsContainer) {
           movementsContainer.setAttribute('data-source-location-id', sourceLocationId);
           movementsContainer.setAttribute('data-location-id', locationId);
+          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || '';
+          movementsContainer.setAttribute('data-order-status', orderStatusValue);
         }
         
         // Update header with Store, Department, and Order Status
@@ -820,6 +822,8 @@ function renderOrderCards(orders) {
         }
         if (releaseOrderBtn && movements.length > 0) {
           releaseOrderBtn.style.display = 'block';
+          // Initial check for pending changes to set button state
+          setTimeout(() => checkPendingChanges(), 100);
         }
         
         // Collect all unique item IDs for image lookup
@@ -988,6 +992,9 @@ function renderMovementCards(movements, imageMap = {}) {
       } else {
         movementCard.style.opacity = '1';
       }
+      
+      // Check for pending changes and update Release Order button state
+      checkPendingChanges();
     };
     
     // Increase quantity
@@ -1054,63 +1061,70 @@ if (submitChangesBtn) {
       return;
     }
     
-    // Get sourceLocationId and locationId from movementsContainer data attributes
+    // Get sourceLocationId, locationId, and orderStatus from movementsContainer data attributes
     const sourceLocationId = movementsContainer?.getAttribute('data-source-location-id');
     const locationId = movementsContainer?.getAttribute('data-location-id');
+    const orderStatus = movementsContainer?.getAttribute('data-order-status') || '';
     
     if (!sourceLocationId || !locationId) {
-      status('Missing location information for review', 'error');
-      logToConsole('Error: SourceLocationId and LocationId required for review API', 'error');
+      status('Missing location information', 'error');
+      logToConsole('Error: SourceLocationId and LocationId required', 'error');
       return;
     }
     
-    status('Starting review...', 'info');
-    logToConsole(`\n=== Review Inventory Movement ===`, 'info');
-    logToConsole(`Action: review-inventory-movement`, 'info');
-    logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review`, 'info');
-    logToConsole(`Request Payload:`, 'info');
-    const reviewPayload = {
-      org: orgInput?.value.trim() || '',
-      sourceLocationId: sourceLocationId,
-      locationId: locationId
-    };
-    logToConsole(JSON.stringify(reviewPayload, null, 2), 'info');
-    logToConsole(`Backend will send payload:`, 'info');
-    const backendReviewPayload = {
-      ItemId: null,
-      SourceLocationId: sourceLocationId,
-      LocationId: locationId,
-      RelationType: "Regular",
-      BracketId: null,
-      executeBracket: false,
-      CancelReview: false,
-      StartReview: true,
-      UseLatest: false
-    };
-    logToConsole(JSON.stringify(backendReviewPayload, null, 2), 'info');
-    
-    // Call review API first
-    let reviewSuccess = false;
-    try {
-      const reviewRes = await api('review-inventory-movement', reviewPayload);
+    // Only call review API if order status is "Suggested"
+    let reviewSuccess = true; // Default to true if review is not needed
+    if (orderStatus === 'Suggested') {
+      status('Starting review...', 'info');
+      logToConsole(`\n=== Review Inventory Movement ===`, 'info');
+      logToConsole(`Action: review-inventory-movement`, 'info');
+      logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review`, 'info');
+      logToConsole(`Request Payload:`, 'info');
+      const reviewPayload = {
+        org: orgInput?.value.trim() || '',
+        sourceLocationId: sourceLocationId,
+        locationId: locationId
+      };
+      logToConsole(JSON.stringify(reviewPayload, null, 2), 'info');
+      logToConsole(`Backend will send payload:`, 'info');
+      const backendReviewPayload = {
+        ItemId: null,
+        SourceLocationId: sourceLocationId,
+        LocationId: locationId,
+        RelationType: "Regular",
+        BracketId: null,
+        executeBracket: false,
+        CancelReview: false,
+        StartReview: true,
+        UseLatest: false
+      };
+      logToConsole(JSON.stringify(backendReviewPayload, null, 2), 'info');
       
-      logToConsole(`\nReview API Response:`, 'info');
-      logToConsole(JSON.stringify(reviewRes, null, 2), reviewRes.success ? 'success' : 'error');
-      logToConsole('=== End Review API Call ===\n', 'info');
-      
-      if (!reviewRes.success) {
-        status(`Review failed: ${reviewRes.error || 'Unknown error'}`, 'error');
-        logToConsole(`Review API failed: ${reviewRes.error || 'Unknown error'}`, 'error');
+      // Call review API
+      try {
+        const reviewRes = await api('review-inventory-movement', reviewPayload);
+        
+        logToConsole(`\nReview API Response:`, 'info');
+        logToConsole(JSON.stringify(reviewRes, null, 2), reviewRes.success ? 'success' : 'error');
+        logToConsole('=== End Review API Call ===\n', 'info');
+        
+        if (!reviewRes.success) {
+          status(`Review failed: ${reviewRes.error || 'Unknown error'}`, 'error');
+          logToConsole(`Review API failed: ${reviewRes.error || 'Unknown error'}`, 'error');
+          return;
+        }
+        
+        reviewSuccess = true;
+        logToConsole('Review API succeeded, proceeding with item updates', 'success');
+      } catch (error) {
+        status(`Review error: ${error.message}`, 'error');
+        logToConsole(`Review API error: ${error.message}`, 'error');
+        logToConsole(`Error stack: ${error.stack}`, 'error');
         return;
       }
-      
-      reviewSuccess = true;
-      logToConsole('Review API succeeded, proceeding with item updates', 'success');
-    } catch (error) {
-      status(`Review error: ${error.message}`, 'error');
-      logToConsole(`Review API error: ${error.message}`, 'error');
-      logToConsole(`Error stack: ${error.stack}`, 'error');
-      return;
+    } else {
+      logToConsole(`\nSkipping Review API - Order status is "${orderStatus}", not "Suggested"`, 'info');
+      logToConsole('Proceeding directly with item updates', 'info');
     }
     
     if (!reviewSuccess) {
@@ -1263,6 +1277,11 @@ if (submitChangesBtn) {
     // Show completion modal
     const totalUpdated = totalSuccess;
     showSubmissionModal(totalUpdated, totalErrors);
+    
+    // Re-enable Release Order button after successful submission (check if no errors or if all updates succeeded)
+    if (totalErrors === 0) {
+      checkPendingChanges(); // This will re-enable the button since quantities match now
+    }
   });
 }
 
@@ -1326,6 +1345,34 @@ if (releaseOrderBtn) {
       logToConsole(`Error stack: ${error.stack}`, 'error');
     }
   });
+}
+
+// Check for pending changes and update Release Order button state
+function checkPendingChanges() {
+  if (!movementsContainer || !releaseOrderBtn) return;
+  
+  const itemCards = movementsContainer.querySelectorAll('.item-card');
+  let hasPendingChanges = false;
+  
+  itemCards.forEach(card => {
+    const currentQuantity = parseFloat(card.getAttribute('data-current-quantity')) || 0;
+    const initialQuantity = parseFloat(card.getAttribute('data-initial-quantity')) || 0;
+    
+    if (currentQuantity !== initialQuantity) {
+      hasPendingChanges = true;
+    }
+  });
+  
+  // Disable Release Order button if there are pending changes
+  if (hasPendingChanges) {
+    releaseOrderBtn.disabled = true;
+    releaseOrderBtn.style.opacity = '0.5';
+    releaseOrderBtn.style.cursor = 'not-allowed';
+  } else {
+    releaseOrderBtn.disabled = false;
+    releaseOrderBtn.style.opacity = '1';
+    releaseOrderBtn.style.cursor = 'pointer';
+  }
 }
 
 // Show submission completion modal
