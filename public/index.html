@@ -690,6 +690,28 @@
         </div>
       </div>
 
+      <!-- Inventory Movement Items Section -->
+      <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0" style="color: var(--text); font-size: 1.25rem;">Order Items</h3>
+          <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div id="movementsContainer" class="orders-container">
+          <!-- Movement cards will be dynamically inserted here -->
+        </div>
+        <div id="movementsLoading" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2" style="color: var(--text-muted);">Loading items...</p>
+        </div>
+        <div id="movementsEmpty" class="text-center py-4" style="display:none;">
+          <p style="color: var(--text-muted);">No items found.</p>
+        </div>
+      </div>
+
       <!-- Console Toggle Button -->
       <div class="text-center mt-3" id="consoleToggleContainer" style="display:none;">
         <button class="btn btn-sm btn-outline-secondary" id="consoleToggleBtn" type="button" title="Toggle Console">

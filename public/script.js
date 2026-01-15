@@ -46,6 +46,13 @@ const ordersLoading = document.getElementById('ordersLoading');
 const ordersEmpty = document.getElementById('ordersEmpty');
 const backToCardsBtn = document.getElementById('backToCardsBtn');
 
+// Inventory Movement section elements
+const inventoryMovementSection = document.getElementById('inventoryMovementSection');
+const movementsContainer = document.getElementById('movementsContainer');
+const movementsLoading = document.getElementById('movementsLoading');
+const movementsEmpty = document.getElementById('movementsEmpty');
+const backToOrdersBtn = document.getElementById('backToOrdersBtn');
+
 // Console elements (keep for debugging)
 const consoleSection = document.getElementById('consoleSection');
 const consoleEl = document.getElementById('console');
@@ -405,8 +412,24 @@ if (backToCardsBtn) {
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'none';
     }
+    if (inventoryMovementSection) {
+      inventoryMovementSection.style.display = 'none';
+    }
     if (cardsSection) {
       cardsSection.style.display = 'block';
+    }
+    status('', 'info');
+  });
+}
+
+// Back to orders button handler
+if (backToOrdersBtn) {
+  backToOrdersBtn.addEventListener('click', () => {
+    if (inventoryMovementSection) {
+      inventoryMovementSection.style.display = 'none';
+    }
+    if (suggestedOrdersSection) {
+      suggestedOrdersSection.style.display = 'block';
     }
     status('', 'info');
   });
@@ -521,13 +544,180 @@ function renderOrderCards(orders) {
       ` : ''}
     `;
     
-    // Add click handler for order card (placeholder for future functionality)
-    orderCard.addEventListener('click', () => {
+    // Add click handler for order card to load inventory movements
+    orderCard.addEventListener('click', async () => {
       logToConsole(`Order card clicked: ${orderId}`, 'info');
-      // TODO: Add order card click functionality
+      
+      if (!token) {
+        status('Please authenticate first', 'error');
+        return;
+      }
+      
+      if (!sourceLocationId || !locationId) {
+        status('Order missing location information', 'error');
+        return;
+      }
+      
+      status('Loading order items...', 'info');
+      
+      // Hide orders section, show movements section
+      if (suggestedOrdersSection) {
+        suggestedOrdersSection.style.display = 'none';
+      }
+      if (inventoryMovementSection) {
+        inventoryMovementSection.style.display = 'block';
+      }
+      if (movementsLoading) {
+        movementsLoading.style.display = 'block';
+      }
+      if (movementsEmpty) {
+        movementsEmpty.style.display = 'none';
+      }
+      if (movementsContainer) {
+        movementsContainer.innerHTML = '';
+      }
+      
+      try {
+        // Prepare API payload
+        const apiPayload = {
+          org: orgInput?.value.trim() || '',
+          sourceLocationId: sourceLocationId,
+          locationId: locationId
+        };
+        
+        // Log API call details to console
+        logToConsole('\n=== Inventory Movement API Call ===', 'info');
+        logToConsole(`Action: search-inventory-movement`, 'info');
+        logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search`, 'info');
+        logToConsole(`Request Payload:`, 'info');
+        logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
+        logToConsole(`Backend will send payload:`, 'info');
+        const backendPayload = {
+          Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
+          Template: {
+            ItemId: null,
+            ItemDescription: null,
+            FinalOrderUnits: null,
+            OnHandQuantity: null,
+            PeriodForecast: null
+          }
+        };
+        logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
+        
+        // Call API to search inventory movement
+        const res = await api('search-inventory-movement', apiPayload);
+        
+        // Log API response to console
+        logToConsole(`\nAPI Response:`, 'info');
+        logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
+        logToConsole('=== End API Call ===\n', 'info');
+        
+        // Show console section when API is called
+        if (consoleSection) {
+          consoleSection.style.display = 'block';
+        }
+        if (consoleToggleContainer) {
+          consoleToggleContainer.style.display = 'block';
+        }
+        
+        if (movementsLoading) {
+          movementsLoading.style.display = 'none';
+        }
+        
+        if (!res.success) {
+          status(res.error || 'Failed to load items', 'error');
+          logToConsole(`Error loading inventory movements: ${res.error || 'Unknown error'}`, 'error');
+          if (movementsEmpty) {
+            movementsEmpty.style.display = 'block';
+          }
+          return;
+        }
+        
+        const movements = res.movements || [];
+        
+        logToConsole(`Movements found: ${movements.length}`, 'info');
+        if (movements.length > 0) {
+          logToConsole(`Movements data:`, 'info');
+          logToConsole(JSON.stringify(movements, null, 2), 'info');
+        }
+        
+        if (movements.length === 0) {
+          status('No items found', 'info');
+          if (movementsEmpty) {
+            movementsEmpty.style.display = 'block';
+          }
+          logToConsole('No inventory movements found', 'info');
+          return;
+        }
+        
+        status(`Found ${movements.length} item(s)`, 'success');
+        logToConsole(`Loaded ${movements.length} inventory movement(s)`, 'success');
+        
+        // Render movement cards
+        renderMovementCards(movements);
+        
+      } catch (error) {
+        if (movementsLoading) {
+          movementsLoading.style.display = 'none';
+        }
+        status('Error loading items', 'error');
+        logToConsole(`Error: ${error.message}`, 'error');
+        logToConsole(`Error stack: ${error.stack}`, 'error');
+        if (movementsEmpty) {
+          movementsEmpty.style.display = 'block';
+        }
+      }
     });
     
     ordersContainer.appendChild(orderCard);
+  });
+}
+
+// Render movement cards
+function renderMovementCards(movements) {
+  if (!movementsContainer) return;
+  
+  movementsContainer.innerHTML = '';
+  
+  movements.forEach((movement, index) => {
+    const movementCard = document.createElement('div');
+    movementCard.className = 'order-card';
+    
+    // Extract movement details (adjust field names based on actual API response)
+    const itemId = movement.ItemId || `Item ${index + 1}`;
+    const itemDescription = movement.ItemDescription || '';
+    const finalOrderUnits = movement.FinalOrderUnits || movement.FinalOrderQty || '';
+    const onHandQuantity = movement.OnHandQuantity || movement.OnHandQty || '';
+    const periodForecast = movement.PeriodForecast || '';
+    
+    movementCard.innerHTML = `
+      <div class="order-card-header">
+        <div>
+          <h4 class="order-card-title">${itemDescription || itemId}</h4>
+          <p class="order-card-id">Item ID: ${itemId}</p>
+        </div>
+      </div>
+      <div class="order-card-details">
+        ${itemDescription ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Description:</span>
+          <span class="order-card-detail-value">${itemDescription}</span>
+        </div>` : ''}
+        ${finalOrderUnits !== '' ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Final Order Units:</span>
+          <span class="order-card-detail-value">${formatNumber(finalOrderUnits)}</span>
+        </div>` : ''}
+        ${onHandQuantity !== '' ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">On Hand Quantity:</span>
+          <span class="order-card-detail-value">${formatNumber(onHandQuantity)}</span>
+        </div>` : ''}
+        ${periodForecast !== '' ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Period Forecast:</span>
+          <span class="order-card-detail-value">${formatNumber(periodForecast)}</span>
+        </div>` : ''}
+      </div>
+    `;
+    
+    movementsContainer.appendChild(movementCard);
   });
 }
 

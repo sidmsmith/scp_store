@@ -251,6 +251,44 @@ export default async function handler(req, res) {
     }
   }
 
+  // === SEARCH INVENTORY MOVEMENT (ORDER ITEMS) ===
+  if (action === 'search-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { sourceLocationId, locationId } = req.body;
+    if (!sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "SourceLocationId and LocationId required" });
+    }
+
+    try {
+      const payload = {
+        Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
+        Template: {
+          ItemId: null,
+          ItemDescription: null,
+          FinalOrderUnits: null,
+          OnHandQuantity: null,
+          PeriodForecast: null
+        }
+      };
+
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      // Extract movements from response (adjust based on actual API response structure)
+      const movements = result.data || result.items || result || [];
+      
+      return res.json({ success: true, movements });
+    } catch (error) {
+      await sendHAMessage('inventory_movement_search_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // Unknown action
   return res.status(400).json({ error: "Unknown action" });
 }
