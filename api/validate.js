@@ -292,6 +292,52 @@ export default async function handler(req, res) {
     }
   }
 
+  // === SEARCH ITEM IMAGES ===
+  if (action === 'search-item-images') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.json({ success: false, error: "ItemIds array required" });
+    }
+
+    try {
+      // Format item IDs for the IN clause: 'ItemId1','ItemId2',...
+      const itemIdsQuoted = itemIds.map(id => `'${id}'`).join(',');
+      
+      const payload = {
+        Query: `ItemId IN (${itemIdsQuoted})`,
+        Template: {
+          ItemId: null,
+          SmallImageURI: null
+        }
+      };
+
+      const result = await apiCall('POST', '/item/api/item/item/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      // Extract items from response (adjust based on actual API response structure)
+      const items = result.data || result.items || result || [];
+      
+      // Create a map of ItemId to SmallImageURI
+      const imageMap = {};
+      items.forEach(item => {
+        if (item.ItemId && item.SmallImageURI) {
+          imageMap[item.ItemId] = item.SmallImageURI;
+        }
+      });
+      
+      return res.json({ success: true, imageMap });
+    } catch (error) {
+      await sendHAMessage('item_images_search_failed', { org: org || 'unknown', item_count: itemIds.length || 0, error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // Unknown action
   return res.status(400).json({ error: "Unknown action" });
 }

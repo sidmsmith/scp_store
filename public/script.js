@@ -808,8 +808,57 @@ function renderOrderCards(orders) {
           submitChangesBtn.style.display = 'block';
         }
         
-        // Render movement cards
-        renderMovementCards(movements);
+        // Collect all unique item IDs for image lookup
+        const itemIds = [...new Set(movements.map(m => m.ItemId).filter(id => id))];
+        
+        // Fetch item images if we have item IDs
+        let imageMap = {};
+        if (itemIds.length > 0) {
+          try {
+            status('Loading item images...', 'info');
+            
+            const imageApiPayload = {
+              org: orgInput?.value.trim() || '',
+              itemIds: itemIds
+            };
+            
+            // Log API call details to console
+            logToConsole('\n=== Item Images API Call ===', 'info');
+            logToConsole(`Action: search-item-images`, 'info');
+            logToConsole(`Endpoint: /item/api/item/item/search`, 'info');
+            logToConsole(`Request Payload:`, 'info');
+            logToConsole(JSON.stringify(imageApiPayload, null, 2), 'info');
+            logToConsole(`Backend will send payload:`, 'info');
+            const backendImagePayload = {
+              Query: `ItemId IN (${itemIds.map(id => `'${id}'`).join(',')})`,
+              Template: {
+                ItemId: null,
+                SmallImageURI: null
+              }
+            };
+            logToConsole(JSON.stringify(backendImagePayload, null, 2), 'info');
+            
+            const imageRes = await api('search-item-images', imageApiPayload);
+            
+            // Log API response to console
+            logToConsole(`\nImage API Response:`, 'info');
+            logToConsole(JSON.stringify(imageRes, null, 2), imageRes.success ? 'success' : 'error');
+            logToConsole('=== End Image API Call ===\n', 'info');
+            
+            if (imageRes.success && imageRes.imageMap) {
+              imageMap = imageRes.imageMap;
+              logToConsole(`Loaded images for ${Object.keys(imageMap).length} item(s)`, 'success');
+            } else {
+              logToConsole(`Failed to load item images: ${imageRes.error || 'Unknown error'}`, 'error');
+            }
+          } catch (error) {
+            logToConsole(`Error loading item images: ${error.message}`, 'error');
+            // Continue rendering without images if image fetch fails
+          }
+        }
+        
+        // Render movement cards with image map
+        renderMovementCards(movements, imageMap);
         
       } catch (error) {
         if (movementsLoading) {
@@ -829,7 +878,7 @@ function renderOrderCards(orders) {
 }
 
 // Render movement cards
-function renderMovementCards(movements) {
+function renderMovementCards(movements, imageMap = {}) {
   if (!movementsContainer) return;
   
   movementsContainer.innerHTML = '';
@@ -850,10 +899,16 @@ function renderMovementCards(movements) {
     // Initialize quantity from FinalOrderUnits
     const initialQuantity = finalOrderUnits !== '' ? parseFloat(finalOrderUnits) : 0;
     
+    // Get image URL from imageMap, fallback to placeholder
+    const imageUrl = imageMap[itemId] || null;
+    const imageHtml = imageUrl 
+      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.parentElement.innerHTML='<div class=\'item-image-placeholder\'></div>';" />`
+      : '<div class="item-image-placeholder"></div>';
+    
     movementCard.innerHTML = `
       <div class="item-card-content">
         <div class="item-card-left">
-          <div class="item-image-placeholder"></div>
+          ${imageHtml}
         </div>
         <div class="item-card-center">
           <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
