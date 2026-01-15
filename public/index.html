@@ -459,6 +459,22 @@
       margin-top: 1.5rem;
     }
     
+    /* Store Header */
+    .store-header {
+      margin-bottom: 1rem;
+    }
+    
+    .store-header span {
+      color: var(--text);
+    }
+    
+    /* Responsive store header */
+    @media (min-width: 768px) {
+      .store-header {
+        font-size: 1.125rem;
+      }
+    }
+    
     /* Orders Container - Scrollable */
     .orders-container {
       max-height: calc(100vh - 300px);
@@ -635,7 +651,7 @@
         <img src="/manhattan-logo.png" alt="Manhattan Associates" class="manhattan-logo" />
       </div>
 
-      <h2 class="text-center mb-4">SCP Store v1.0.0</h2>
+      <h2 id="mainTitle" class="text-center mb-4">SCP Store v1.0.0</h2>
 
       <div id="authSection" class="mb-3">
         <label class="form-label">ORG:</label>
@@ -671,8 +687,20 @@
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3 class="mb-0" style="color: var(--text); font-size: 1.25rem;">Suggested Orders</h3>
-          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button">
+          <div id="storeHeader" class="store-header" style="flex: 1;">
+            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
+              <span>Store: <span id="headerStoreId"></span></span>
+            </div>
+            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
+              <span>Department: <span id="headerDepartment"></span></span>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary" id="backToStoreBtn" type="button" style="margin-left: 1rem;">
+            <i class="fas fa-arrow-left"></i> Change Store
+          </button>
+        </div>
+        <div class="d-flex justify-content-end mb-2">
+          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none;">
             <i class="fas fa-arrow-left"></i> Back
           </button>
         </div>

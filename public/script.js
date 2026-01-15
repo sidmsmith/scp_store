@@ -252,6 +252,12 @@ async function submitStoreId() {
     cardsSection.style.display = 'block';
   }
   
+  // Show main title
+  const mainTitle = document.getElementById('mainTitle');
+  if (mainTitle) {
+    mainTitle.style.display = 'block';
+  }
+  
   status('Store loaded', 'success');
   return true;
 }
@@ -288,6 +294,19 @@ if (suggestedOrdersCard) {
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'block';
     }
+    
+    // Hide main title and show store header
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'none';
+    }
+    
+    // Clear header values initially
+    const headerStoreId = document.getElementById('headerStoreId');
+    const headerDepartment = document.getElementById('headerDepartment');
+    if (headerStoreId) headerStoreId.textContent = '';
+    if (headerDepartment) headerDepartment.textContent = '';
+    
     if (ordersLoading) {
       ordersLoading.style.display = 'block';
     }
@@ -376,6 +395,19 @@ if (suggestedOrdersCard) {
       status(`Found ${orders.length} suggested order(s)`, 'success');
       logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
       
+      // Update header with Store and Department
+      const headerStoreId = document.getElementById('headerStoreId');
+      const headerDepartment = document.getElementById('headerDepartment');
+      if (headerStoreId) {
+        headerStoreId.textContent = storeId || 'N/A';
+      }
+      // Get Department from first order's SubGroup
+      const firstOrder = orders.length > 0 ? orders[0] : null;
+      const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
+      if (headerDepartment) {
+        headerDepartment.textContent = department;
+      }
+      
       // Render order cards
       renderOrderCards(orders);
       
@@ -406,7 +438,46 @@ if (opportunityBuysCard) {
   });
 }
 
-// Back to cards button handler
+// Back to store button handler (allows changing store)
+const backToStoreBtn = document.getElementById('backToStoreBtn');
+if (backToStoreBtn) {
+  backToStoreBtn.addEventListener('click', () => {
+    // Hide suggested orders section
+    if (suggestedOrdersSection) {
+      suggestedOrdersSection.style.display = 'none';
+    }
+    if (inventoryMovementSection) {
+      inventoryMovementSection.style.display = 'none';
+    }
+    
+    // Show main title and hide store header
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'block';
+    }
+    
+    // Show Store ID input section to allow changing store
+    if (storeIdSection) {
+      storeIdSection.style.display = 'block';
+      storeIdInput?.focus();
+    }
+    
+    // Hide cards section
+    if (cardsSection) {
+      cardsSection.style.display = 'none';
+    }
+    
+    // Clear store ID to allow re-entry
+    storeId = null;
+    if (storeIdInput) {
+      storeIdInput.value = '';
+    }
+    
+    status('Enter a new Store ID', 'info');
+  });
+}
+
+// Back to cards button handler (for navigation within orders)
 if (backToCardsBtn) {
   backToCardsBtn.addEventListener('click', () => {
     if (suggestedOrdersSection) {
@@ -418,6 +489,13 @@ if (backToCardsBtn) {
     if (cardsSection) {
       cardsSection.style.display = 'block';
     }
+    
+    // Show main title when back to cards
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'block';
+    }
+    
     status('', 'info');
   });
 }
@@ -431,6 +509,13 @@ if (backToOrdersBtn) {
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'block';
     }
+    
+    // Keep main title hidden when showing orders
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'none';
+    }
+    
     status('', 'info');
   });
 }
@@ -566,6 +651,12 @@ function renderOrderCards(orders) {
       }
       if (inventoryMovementSection) {
         inventoryMovementSection.style.display = 'block';
+      }
+      
+      // Keep main title hidden when showing items
+      const mainTitle = document.getElementById('mainTitle');
+      if (mainTitle) {
+        mainTitle.style.display = 'none';
       }
       if (movementsLoading) {
         movementsLoading.style.display = 'block';
