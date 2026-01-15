@@ -1259,6 +1259,27 @@ if (submitChangesBtn) {
   });
 }
 
+// Show submission completion modal
+function showSubmissionModal(updatedCount, errorCount) {
+  const modalEl = document.getElementById('submissionModal');
+  const messageEl = document.getElementById('submissionModalMessage');
+  
+  if (!modalEl || !messageEl) return;
+  
+  let message = '';
+  if (errorCount === 0) {
+    message = `Successfully updated ${updatedCount} line(s).`;
+  } else {
+    message = `Updated ${updatedCount} line(s) with ${errorCount} error(s). Check console for details.`;
+  }
+  
+  messageEl.textContent = message;
+  
+  // Show modal using Bootstrap
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
 // Auto-authenticate if Organization or ORG parameter is provided in URL
 window.addEventListener('load', async () => {
   // Track app opened
