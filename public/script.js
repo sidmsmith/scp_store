@@ -26,10 +26,11 @@ if (urlOrg) {
 }
 
 let token = null;
-let forecastFileData = null; // Store parsed forecast file data
-let forecastFileHeader = null; // Store forecast file header row
-let locationFileData = null; // Store parsed location file data
-let locationFileHeader = null; // Store location file header row
+// Legacy file variables - kept for compatibility but not used
+let forecastFileData = null;
+let forecastFileHeader = null;
+let locationFileData = null;
+let locationFileHeader = null;
 
 // Store ID section elements
 const storeIdSection = document.getElementById('storeIdSection');
@@ -291,11 +292,48 @@ if (suggestedOrdersCard) {
     }
     
     try {
-      // Call API to search inventory movement summary
-      const res = await api('search-inventory-movement-summary', { 
+      // Prepare API payload
+      const apiPayload = {
         org: orgInput?.value.trim() || '',
         storeId: storeId 
-      });
+      };
+      
+      // Log API call details to console
+      logToConsole('\n=== Suggested Orders API Call ===', 'info');
+      logToConsole(`Action: search-inventory-movement-summary`, 'info');
+      logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+      logToConsole(`Request Payload:`, 'info');
+      logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
+      logToConsole(`Backend will send payload:`, 'info');
+      const backendPayload = {
+        Query: `LocationId='${storeId}'`,
+        Template: {
+          LocationId: null,
+          SourceLocationId: null,
+          SubGroup: null,
+          InventoryMovementSummaryId: null,
+          OrderStatus: {
+            OrderStatusId: null
+          }
+        }
+      };
+      logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
+      
+      // Call API to search inventory movement summary
+      const res = await api('search-inventory-movement-summary', apiPayload);
+      
+      // Log API response to console
+      logToConsole(`\nAPI Response:`, 'info');
+      logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
+      logToConsole('=== End API Call ===\n', 'info');
+      
+      // Show console section when API is called
+      if (consoleSection) {
+        consoleSection.style.display = 'block';
+      }
+      if (consoleToggleContainer) {
+        consoleToggleContainer.style.display = 'block';
+      }
       
       if (ordersLoading) {
         ordersLoading.style.display = 'none';
@@ -311,6 +349,12 @@ if (suggestedOrdersCard) {
       }
       
       const orders = res.orders || [];
+      
+      logToConsole(`Orders found: ${orders.length}`, 'info');
+      if (orders.length > 0) {
+        logToConsole(`Orders data:`, 'info');
+        logToConsole(JSON.stringify(orders, null, 2), 'info');
+      }
       
       if (orders.length === 0) {
         status('No suggested orders found', 'info');
@@ -333,6 +377,7 @@ if (suggestedOrdersCard) {
       }
       status('Error loading orders', 'error');
       logToConsole(`Error: ${error.message}`, 'error');
+      logToConsole(`Error stack: ${error.stack}`, 'error');
       if (ordersEmpty) {
         ordersEmpty.style.display = 'block';
       }
@@ -664,15 +709,15 @@ async function parseForecastFile(file) {
   return { rows, headerDetected, headerRow };
 }
 
-// Forecast file picker button
-if (forecastFileLoadBtn && forecastFileInput) {
+// Forecast file picker button (legacy - file upload removed)
+if (typeof forecastFileLoadBtn !== 'undefined' && forecastFileLoadBtn && typeof forecastFileInput !== 'undefined' && forecastFileInput) {
   forecastFileLoadBtn.addEventListener('click', () => {
     forecastFileInput.click();
   });
 }
 
-// Forecast file change handler
-if (forecastFileInput) {
+// Forecast file change handler (legacy - file upload removed)
+if (typeof forecastFileInput !== 'undefined' && forecastFileInput) {
   forecastFileInput.addEventListener('change', async (e) => {
     if (!e.target.files.length) {
       forecastFileData = null;
@@ -961,15 +1006,15 @@ function logToConsole(message, type = 'info') {
   consoleEl.scrollTop = consoleEl.scrollHeight;
 }
 
-// Location file picker button
-if (locationFileLoadBtn && locationFileInput) {
+// Location file picker button (legacy - file upload removed)
+if (typeof locationFileLoadBtn !== 'undefined' && locationFileLoadBtn && typeof locationFileInput !== 'undefined' && locationFileInput) {
   locationFileLoadBtn.addEventListener('click', () => {
     locationFileInput.click();
   });
 }
 
-// Location file change handler
-if (locationFileInput) {
+// Location file change handler (legacy - file upload removed)
+if (typeof locationFileInput !== 'undefined' && locationFileInput) {
   locationFileInput.addEventListener('change', async (e) => {
     if (!e.target.files.length) {
       locationFileData = null;
