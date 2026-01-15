@@ -1005,24 +1005,6 @@ function renderMovementCards(movements, imageMap = {}) {
       });
     }
     
-    function updateQuantityDisplay() {
-      if (quantityText) {
-        quantityText.textContent = `${formatNumber(currentQuantity)} ct`;
-      }
-      
-      // Show/hide decrease button based on quantity
-      if (decreaseBtn) {
-        if (currentQuantity > 0) {
-          decreaseBtn.style.display = 'inline-flex';
-        } else {
-          decreaseBtn.style.display = 'none';
-        }
-      }
-      
-      // Store updated quantity
-      movementCard.setAttribute('data-current-quantity', currentQuantity);
-    }
-    
     movementsContainer.appendChild(movementCard);
   });
 }
