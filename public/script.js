@@ -57,6 +57,7 @@ const movementsContainer = document.getElementById('movementsContainer');
 const movementsLoading = document.getElementById('movementsLoading');
 const movementsEmpty = document.getElementById('movementsEmpty');
 const backToOrdersBtn = document.getElementById('backToOrdersBtn');
+const submitChangesBtn = document.getElementById('submitChangesBtn');
 
 // Console elements (keep for debugging)
 const consoleSection = document.getElementById('consoleSection');
@@ -675,6 +676,9 @@ function renderOrderCards(orders) {
       if (movementsContainer) {
         movementsContainer.innerHTML = '';
       }
+      if (submitChangesBtn) {
+        submitChangesBtn.style.display = 'none';
+      }
       
       try {
         // Prepare API payload
@@ -748,6 +752,9 @@ function renderOrderCards(orders) {
           if (movementsEmpty) {
             movementsEmpty.style.display = 'block';
           }
+          if (submitChangesBtn) {
+            submitChangesBtn.style.display = 'none';
+          }
           logToConsole('No inventory movements found', 'info');
           return;
         }
@@ -772,6 +779,11 @@ function renderOrderCards(orders) {
         if (itemsHeaderOrderStatus) {
           const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
           itemsHeaderOrderStatus.textContent = orderStatusValue;
+        }
+        
+        // Show submit button when items are loaded
+        if (submitChangesBtn && movements.length > 0) {
+          submitChangesBtn.style.display = 'block';
         }
         
         // Render movement cards
@@ -831,20 +843,19 @@ function renderMovementCards(movements) {
           </div>
         </div>
         <div class="item-card-right">
-          <i class="fas fa-chevron-right item-card-arrow"></i>
+          <div class="item-quantity-control">
+            <button class="quantity-pill-btn quantity-pill-remove" data-item-id="${itemId}" title="Remove item">
+              <i class="fas fa-trash"></i>
+            </button>
+            <button class="quantity-pill-btn quantity-pill-decrease" data-item-id="${itemId}" title="Decrease quantity" ${initialQuantity <= 0 ? 'style="display:none;"' : ''}>
+              <i class="fas fa-minus"></i>
+            </button>
+            <span class="quantity-pill-text" data-item-id="${itemId}">${formatNumber(initialQuantity)} ct</span>
+            <button class="quantity-pill-btn quantity-pill-increase" data-item-id="${itemId}" title="Increase quantity">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="item-quantity-control">
-        <button class="quantity-pill-btn quantity-pill-remove" data-item-id="${itemId}" title="Remove item">
-          <i class="fas fa-trash"></i>
-        </button>
-        <button class="quantity-pill-btn quantity-pill-decrease" data-item-id="${itemId}" title="Decrease quantity" ${initialQuantity <= 0 ? 'style="display:none;"' : ''}>
-          <i class="fas fa-minus"></i>
-        </button>
-        <span class="quantity-pill-text" data-item-id="${itemId}">${formatNumber(initialQuantity)} ct</span>
-        <button class="quantity-pill-btn quantity-pill-increase" data-item-id="${itemId}" title="Increase quantity">
-          <i class="fas fa-plus"></i>
-        </button>
       </div>
     `;
     
@@ -910,6 +921,48 @@ function renderMovementCards(movements) {
     }
     
     movementsContainer.appendChild(movementCard);
+  });
+}
+
+// Submit button handler
+if (submitChangesBtn) {
+  submitChangesBtn.addEventListener('click', async () => {
+    if (!movementsContainer) return;
+    
+    // Collect all item cards and their updated quantities
+    const itemCards = movementsContainer.querySelectorAll('.item-card');
+    const updates = [];
+    
+    itemCards.forEach(card => {
+      const itemId = card.getAttribute('data-item-id');
+      const currentQuantity = parseFloat(card.getAttribute('data-current-quantity')) || 0;
+      const initialQuantity = parseFloat(card.getAttribute('data-initial-quantity')) || 0;
+      
+      // Only include items with changed quantities or removed items
+      if (currentQuantity !== initialQuantity) {
+        updates.push({
+          itemId: itemId,
+          quantity: currentQuantity,
+          initialQuantity: initialQuantity
+        });
+      }
+    });
+    
+    if (updates.length === 0) {
+      status('No changes to submit', 'info');
+      logToConsole('No quantity changes detected', 'info');
+      return;
+    }
+    
+    status('Preparing to submit changes...', 'info');
+    logToConsole(`Preparing to submit ${updates.length} item update(s)`, 'info');
+    logToConsole('Updates:', 'info');
+    logToConsole(JSON.stringify(updates, null, 2), 'info');
+    
+    // TODO: Add API call to submit changes
+    // await api('submit-order-changes', { org: orgInput?.value.trim() || '', updates });
+    
+    status(`${updates.length} change(s) ready to submit (API integration pending)`, 'info');
   });
 }
 

@@ -722,16 +722,8 @@
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      padding-top: 0.25rem;
-    }
-    
-    .item-card-arrow {
-      color: #666;
-      font-size: 1.25rem;
-    }
-    
-    .item-card:hover .item-card-arrow {
-      color: var(--primary);
+      justify-content: center;
+      padding-left: 1rem;
     }
     
     /* Quantity Control Pill */
@@ -740,13 +732,10 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      margin-top: 1rem;
       padding: 0.5rem;
       background: var(--primary);
       border-radius: 50px;
       width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
     }
     
     .quantity-pill-btn {
@@ -814,6 +803,42 @@
         font-size: 1rem;
         min-width: 60px;
       }
+    }
+    
+    /* Submit Button Container - Sticky at bottom */
+    .submit-button-container {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-dark);
+      padding: 1rem 0;
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+    }
+    
+    :root.theme-light .submit-button-container {
+      background: #f5f5f5;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    #submitChangesBtn {
+      min-width: 200px;
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    #submitChangesBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    
+    /* Adjust orders container to account for sticky submit button */
+    .inventory-movement-section .orders-container {
+      padding-bottom: 1rem;
+      margin-bottom: 0;
     }
     
     .option-card:hover .option-card-arrow {
@@ -929,6 +954,12 @@
         </div>
         <div id="movementsEmpty" class="text-center py-4" style="display:none;">
           <p style="color: var(--text-muted);">No items found.</p>
+        </div>
+        <!-- Submit Button - Sticky at bottom -->
+        <div class="submit-button-container">
+          <button class="btn btn-primary btn-lg" id="submitChangesBtn" type="button" style="display:none;">
+            <i class="fas fa-check"></i> Submit Changes
+          </button>
         </div>
       </div>
 
