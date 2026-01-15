@@ -58,6 +58,7 @@ const movementsLoading = document.getElementById('movementsLoading');
 const movementsEmpty = document.getElementById('movementsEmpty');
 const backToOrdersBtn = document.getElementById('backToOrdersBtn');
 const submitChangesBtn = document.getElementById('submitChangesBtn');
+const releaseOrderBtn = document.getElementById('releaseOrderBtn');
 
 // Console elements (keep for debugging)
 const consoleSection = document.getElementById('consoleSection');
@@ -701,6 +702,9 @@ function renderOrderCards(orders) {
       if (submitChangesBtn) {
         submitChangesBtn.style.display = 'none';
       }
+      if (releaseOrderBtn) {
+        releaseOrderBtn.style.display = 'none';
+      }
       
       try {
         // Prepare API payload
@@ -810,9 +814,12 @@ function renderOrderCards(orders) {
           itemsHeaderOrderStatus.textContent = orderStatusValue;
         }
         
-        // Show submit button when items are loaded
+        // Show submit and release order buttons when items are loaded
         if (submitChangesBtn && movements.length > 0) {
           submitChangesBtn.style.display = 'block';
+        }
+        if (releaseOrderBtn && movements.length > 0) {
+          releaseOrderBtn.style.display = 'block';
         }
         
         // Collect all unique item IDs for image lookup
@@ -1256,6 +1263,68 @@ if (submitChangesBtn) {
     // Show completion modal
     const totalUpdated = totalSuccess;
     showSubmissionModal(totalUpdated, totalErrors);
+  });
+}
+
+// Release Order button handler
+if (releaseOrderBtn) {
+  releaseOrderBtn.addEventListener('click', async () => {
+    if (!movementsContainer) return;
+    
+    // Get sourceLocationId and locationId from movementsContainer data attributes
+    const sourceLocationId = movementsContainer?.getAttribute('data-source-location-id');
+    const locationId = movementsContainer?.getAttribute('data-location-id');
+    
+    if (!sourceLocationId || !locationId) {
+      status('Missing location information for release', 'error');
+      logToConsole('Error: SourceLocationId and LocationId required for release API', 'error');
+      return;
+    }
+    
+    // Confirm release
+    const confirmed = confirm(`Are you sure you want to release the order?\n\nStore: ${locationId}\nSource: ${sourceLocationId}`);
+    if (!confirmed) {
+      return;
+    }
+    
+    status('Releasing order...', 'info');
+    logToConsole(`\n=== Release Order ===`, 'info');
+    logToConsole(`Action: approve-inventory-movement`, 'info');
+    logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve`, 'info');
+    logToConsole(`Request Payload:`, 'info');
+    const approvePayload = {
+      org: orgInput?.value.trim() || '',
+      sourceLocationId: sourceLocationId,
+      locationId: locationId
+    };
+    logToConsole(JSON.stringify(approvePayload, null, 2), 'info');
+    logToConsole(`Backend will send payload:`, 'info');
+    const backendApprovePayload = {
+      LocationId: locationId,
+      SourceLocationId: sourceLocationId,
+      RelationType: "Regular"
+    };
+    logToConsole(JSON.stringify(backendApprovePayload, null, 2), 'info');
+    
+    try {
+      const approveRes = await api('approve-inventory-movement', approvePayload);
+      
+      logToConsole(`\nRelease API Response:`, 'info');
+      logToConsole(JSON.stringify(approveRes, null, 2), approveRes.success ? 'success' : 'error');
+      logToConsole('=== End Release API Call ===\n', 'info');
+      
+      if (approveRes.success) {
+        status('Order released successfully', 'success');
+        logToConsole('Order released successfully', 'success');
+      } else {
+        status(`Release failed: ${approveRes.error || 'Unknown error'}`, 'error');
+        logToConsole(`Release API failed: ${approveRes.error || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      status(`Release error: ${error.message}`, 'error');
+      logToConsole(`Release API error: ${error.message}`, 'error');
+      logToConsole(`Error stack: ${error.stack}`, 'error');
+    }
   });
 }
 

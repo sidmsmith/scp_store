@@ -834,6 +834,9 @@
       z-index: 100;
       display: flex;
       justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
     
     :root.theme-light .submit-button-container {
@@ -854,6 +857,19 @@
     #submitChangesBtn:hover {
       background: var(--success-hover) !important;
       border-color: var(--success-hover) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    #releaseOrderBtn {
+      min-width: 150px;
+      font-weight: 600;
+      padding: 0.5rem 1.5rem;
+      font-size: 0.9375rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    #releaseOrderBtn:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
@@ -985,10 +1001,13 @@
         <div id="movementsEmpty" class="text-center py-4" style="display:none;">
           <p style="color: var(--text-muted);">No items found.</p>
         </div>
-        <!-- Submit Button - Sticky at bottom -->
+        <!-- Submit and Release Order Buttons - Sticky at bottom -->
         <div class="submit-button-container">
           <button class="btn btn-primary btn-lg" id="submitChangesBtn" type="button" style="display:none;">
             <i class="fas fa-check"></i> Submit Changes
+          </button>
+          <button class="btn btn-primary btn-lg" id="releaseOrderBtn" type="button" style="display:none; margin-left: 1rem;">
+            <i class="fas fa-paper-plane"></i> Release Order
           </button>
         </div>
       </div>
