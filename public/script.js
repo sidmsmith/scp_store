@@ -633,9 +633,7 @@ function renderOrderCards(orders) {
     }
     
     // Add click handler for order card to load inventory movements
-    orderCard.addEventListener('click', async (event) => {
-      // Store reference to this card for header info
-      window.currentOrderCard = orderCard;
+    orderCard.addEventListener('click', async () => {
       logToConsole(`Order card clicked: ${orderId}`, 'info');
       
       if (!token) {
@@ -756,21 +754,18 @@ function renderOrderCards(orders) {
         const itemsHeaderDepartment = document.getElementById('itemsHeaderDepartment');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
         
-        // Get the clicked order card from window storage
-        const clickedOrderCard = window.currentOrderCard || orderCard;
-        
         if (itemsHeaderStoreId) {
           itemsHeaderStoreId.textContent = locationId || storeId || 'N/A';
         }
-        // Get Department from the order's SubGroup
+        // Get Department from the order's SubGroup (from data attribute or variable)
         if (itemsHeaderDepartment) {
-          const department = clickedOrderCard ? (clickedOrderCard.getAttribute('data-subgroup') || 'N/A') : 'N/A';
+          const department = orderCard.getAttribute('data-subgroup') || subGroup || 'N/A';
           itemsHeaderDepartment.textContent = department;
         }
-        // Get Order Status from the order
+        // Get Order Status from the order (from data attribute or variable)
         if (itemsHeaderOrderStatus) {
-          const orderStatus = clickedOrderCard ? (clickedOrderCard.getAttribute('data-order-status') || 'N/A') : 'N/A';
-          itemsHeaderOrderStatus.textContent = orderStatus;
+          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
+          itemsHeaderOrderStatus.textContent = orderStatusValue;
         }
         
         // Render movement cards
