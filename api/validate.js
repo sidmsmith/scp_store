@@ -270,6 +270,7 @@ export default async function handler(req, res) {
             ItemDescription: null
           },
           FinalOrderUnits: null,
+          FinalOrderCost: null,
           OnHandQuantity: null,
           PeriodForecast: null
         }

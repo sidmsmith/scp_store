@@ -694,6 +694,7 @@ function renderOrderCards(orders) {
               ItemDescription: null
             },
             FinalOrderUnits: null,
+            FinalOrderCost: null,
             OnHandQuantity: null,
             PeriodForecast: null
           }
@@ -803,10 +804,9 @@ function renderMovementCards(movements) {
     // Get ItemDescription from nested InventoryMovementDetail structure
     const itemDescription = movement.InventoryMovementDetail?.ItemDescription || movement.ItemDescription || '';
     const finalOrderUnits = movement.FinalOrderUnits || movement.FinalOrderQty || '';
+    const finalOrderCost = movement.FinalOrderCost || null;
     const onHandQuantity = movement.OnHandQuantity || movement.OnHandQty || '';
     const periodForecast = movement.PeriodForecast || '';
-    // Price might be in different fields - check common locations
-    const price = movement.Price || movement.UnitPrice || movement.ItemPrice || null;
     
     movementCard.innerHTML = `
       <div class="item-card-content">
@@ -814,10 +814,10 @@ function renderMovementCards(movements) {
           <div class="item-image-placeholder"></div>
         </div>
         <div class="item-card-center">
-          <div class="item-card-title">${itemId} - ${itemDescription || 'No Description'}</div>
+          <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
           <div class="item-card-details">
             ${finalOrderUnits !== '' ? `<div class="item-detail-line">Quantity: ${formatNumber(finalOrderUnits)}</div>` : ''}
-            ${price !== null ? `<div class="item-detail-line">Price: ${formatCurrency(price)}</div>` : ''}
+            ${finalOrderCost !== null ? `<div class="item-detail-line">Price: ${formatCurrency(finalOrderCost)}</div>` : ''}
             ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
             ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
           </div>
