@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>SCP Store v1.0.0</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -54,29 +54,121 @@
       --pre-text: #e0e0e0; /* Order Generator text color */
     }
     
+    /* Light Theme - White background with white cards and shadows */
+    :root.theme-light {
+      --bg-dark: #f5f5f5;
+      --card-bg: #ffffff;
+      --input-bg: #ffffff;
+      --border: #e0e0e0;
+      --text: #333333;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --primary: #0d6efd;
+      --primary-hover: #0b5ed7;
+      --success: #28a745;
+      --success-hover: #218838;
+      --danger: #dc3545;
+      --danger-hover: #c82333;
+      --workspace-bg: #ffffff;
+      --workspace-border: #e0e0e0;
+      --workspace-unlocked: #0d6efd;
+      --pre-bg: #f5f5f5;
+      --pre-border: #e0e0e0;
+      --pre-text: #333333;
+    }
+    
     body {
       background: var(--bg-dark);
       color: var(--text);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0.5rem;
+      margin: 0;
+      min-height: 100vh;
     }
+    
+    /* Mobile-first container */
+    .container {
+      max-width: 100%;
+      padding: 0;
+      margin: 0 auto;
+    }
+    
+    /* Mobile-first card */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
+      padding: 1rem;
+      margin: 0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       position: relative;
     }
+    
+    /* Light theme: White cards with enhanced shadows */
+    :root.theme-light .card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid #e0e0e0;
+      background: #ffffff;
+    }
+    
+    /* Light theme: Modal styling */
+    :root.theme-light .modal-content {
+      background-color: #ffffff;
+      color: #333333;
+      border: 1px solid #e0e0e0;
+    }
+    
+    :root.theme-light .modal-header,
+    :root.theme-light .modal-footer {
+      border-color: #e0e0e0;
+    }
+    
+    :root.theme-light .list-group-item {
+      background-color: #f9f9f9;
+      border-color: #e0e0e0;
+      color: #333333;
+    }
+    
+    :root.theme-light .list-group-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    :root.theme-light .list-group-item.active {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    
+    /* Mobile-first title */
+    h2 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Mobile-first form controls */
     .form-control, .form-select {
       background: var(--input-bg);
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 1rem;
     }
-    .form-control:focus, .form-select:focus {
-      background: var(--input-bg);
+    
+    /* Light theme: White inputs with border */
+    :root.theme-light .form-control,
+    :root.theme-light .form-select {
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
+      color: #333333;
+    }
+    
+    :root.theme-light .form-control:focus,
+    :root.theme-light .form-select:focus {
+      background: #ffffff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
-      color: var(--text);
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
     .btn-success { background: var(--success); border: none; }
     .btn-danger { background: var(--danger); border: none; }
@@ -135,31 +227,54 @@
     small { color: var(--text-muted); }
     h2 { color: var(--primary); }
     
-    /* THEME SELECTOR */
+    /* THEME SELECTOR - Mobile-first */
     .theme-selector-btn {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
+      top: 0.75rem;
+      right: 0.75rem;
       background: none;
       border: none;
       color: #e0e0e0;
-      padding: 0;
+      padding: 0.5rem;
       cursor: pointer;
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       z-index: 1000;
       transition: transform 0.2s;
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    
     .theme-selector-btn:hover {
       transform: rotate(90deg);
     }
+    
+    /* Light theme: Darker icon for visibility */
+    :root.theme-light .theme-selector-btn {
+      color: #666666;
+    }
+    
     :root.theme-manhattan .theme-selector-btn {
       color: #e0e0e0;
     }
-    :root.theme-manhattan .theme-selector-btn:hover {
+    
+    :root.theme-manhattan .theme-selector-btn:hover,
+    :root.theme-light .theme-selector-btn:hover {
       opacity: 1 !important;
+    }
+    
+    /* Responsive theme button */
+    @media (min-width: 768px) {
+      .theme-selector-btn {
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+      }
     }
     
     /* Modal styling */
@@ -210,12 +325,21 @@
       color: #bbbbbb !important; /* Same as form-label color */
     }
     
-    /* Manhattan Logo */
+    /* Manhattan Logo - Mobile-first sizing */
     .manhattan-logo {
       display: block;
-      margin: 0 auto 2rem;
-      max-width: 200px;
+      margin: 0 auto 1.5rem;
+      max-width: 150px;
+      width: 80%;
       height: auto;
+    }
+    
+    /* Responsive logo sizing for larger screens */
+    @media (min-width: 768px) {
+      .manhattan-logo {
+        max-width: 200px;
+        margin-bottom: 2rem;
+      }
     }
     
     /* Store ID Input Section */
@@ -232,15 +356,23 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+      padding: 1.25rem;
+      margin-bottom: 0.75rem;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
       position: relative;
+      min-height: 60px;
+    }
+    
+    /* Light theme: White cards with enhanced shadows */
+    :root.theme-light .option-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
     }
     
     .option-card:hover {
@@ -249,9 +381,24 @@
       border-color: var(--primary);
     }
     
+    /* Light theme: Hover effect with shadow */
+    :root.theme-light .option-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--primary);
+    }
+    
+    /* Mobile-responsive card padding */
+    @media (min-width: 768px) {
+      .option-card {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        gap: 1rem;
+      }
+    }
+    
     .option-card-icon {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       background: #d3d3d3;
       border-radius: 8px;
       display: flex;
@@ -260,18 +407,50 @@
       flex-shrink: 0;
     }
     
+    /* Light theme: Lighter icon background */
+    :root.theme-light .option-card-icon {
+      background: #e8e8e8;
+    }
+    
+    /* Responsive icon sizing */
+    @media (min-width: 768px) {
+      .option-card-icon {
+        width: 40px;
+        height: 40px;
+      }
+    }
+    
     .option-card-text {
       flex: 1;
       text-align: center;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 500;
       color: var(--text);
     }
     
+    /* Responsive text sizing */
+    @media (min-width: 768px) {
+      .option-card-text {
+        font-size: 1.25rem;
+      }
+    }
+    
     .option-card-arrow {
       color: #666;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       flex-shrink: 0;
+    }
+    
+    /* Light theme: Darker arrow for contrast */
+    :root.theme-light .option-card-arrow {
+      color: #666666;
+    }
+    
+    /* Responsive arrow sizing */
+    @media (min-width: 768px) {
+      .option-card-arrow {
+        font-size: 1.25rem;
+      }
     }
     
     .option-card:hover .option-card-arrow {
@@ -279,7 +458,7 @@
     }
   </style>
 </head>
-<body class="p-4">
+  <body>
   <div class="container">
     <div class="card p-4">
       <button class="theme-selector-btn" id="themeSelectorBtn" title="Select Theme">

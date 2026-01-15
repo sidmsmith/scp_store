@@ -56,6 +56,10 @@ const themes = {
   'manhattan': {
     name: 'Manhattan',
     rootClass: 'theme-manhattan'
+  },
+  'light': {
+    name: 'Light',
+    rootClass: 'theme-light'
   }
 };
 
@@ -67,7 +71,7 @@ function applyTheme(themeKey) {
   const root = document.documentElement;
   
   // Remove all theme classes
-  root.classList.remove('theme-dark', 'theme-manhattan');
+  root.classList.remove('theme-dark', 'theme-manhattan', 'theme-light');
   
   // Add theme class
   if (theme.rootClass) {
@@ -85,7 +89,7 @@ function loadTheme() {
 
 function renderThemeList() {
   themeList.innerHTML = '';
-  const currentTheme = localStorage.getItem('selectedTheme') || 'dark';
+  const currentTheme = localStorage.getItem('selectedTheme') || 'light';
 
   Object.entries(themes).forEach(([key, theme]) => {
     const item = document.createElement('button');
