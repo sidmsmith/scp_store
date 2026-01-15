@@ -266,6 +266,7 @@ export default async function handler(req, res) {
         Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
         Template: {
           ItemId: null,
+          InventoryMovementId: null,
           InventoryMovementDetail: {
             ItemDescription: null
           },
@@ -288,6 +289,35 @@ export default async function handler(req, res) {
       return res.json({ success: true, movements });
     } catch (error) {
       await sendHAMessage('inventory_movement_search_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SAVE SUGGESTED ORDER LINE ===
+  if (action === 'save-suggested-order-line') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { inventoryMovementId, finalOrderQty } = req.body;
+    if (!inventoryMovementId || finalOrderQty === undefined || finalOrderQty === null) {
+      return res.json({ success: false, error: "InventoryMovementId and FinalOrderQty required" });
+    }
+
+    try {
+      const payload = {
+        InventoryMovementId: inventoryMovementId,
+        FinalOrderQty: finalOrderQty
+      };
+
+      const result = await apiCall('POST', '/aiui-facade/api/aiui-facade/view/save/com-manh-cp-aiui-facade/SuggestedOrderLine', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      return res.json({ success: true, result });
+    } catch (error) {
+      await sendHAMessage('save_suggested_order_line_failed', { org: org || 'unknown', inventory_movement_id: inventoryMovementId || 'unknown', error: error.message });
       return res.json({ success: false, error: error.message });
     }
   }

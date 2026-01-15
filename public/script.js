@@ -721,6 +721,7 @@ function renderOrderCards(orders) {
           Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
           Template: {
             ItemId: null,
+            InventoryMovementId: null,
             InventoryMovementDetail: {
               ItemDescription: null
             },
@@ -905,6 +906,9 @@ function renderMovementCards(movements, imageMap = {}) {
       ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.parentElement.innerHTML='<div class=\'item-image-placeholder\'></div>';" />`
       : '<div class="item-image-placeholder"></div>';
     
+    // Get InventoryMovementId (not displayed, but needed for updates)
+    const inventoryMovementId = movement.InventoryMovementId || '';
+    
     movementCard.innerHTML = `
       <div class="item-card-content">
         <div class="item-card-left">
@@ -919,26 +923,28 @@ function renderMovementCards(movements, imageMap = {}) {
             ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
           </div>
         </div>
-        <div class="item-card-right">
-          <div class="item-quantity-control">
-            <button class="quantity-pill-btn quantity-pill-remove" data-item-id="${itemId}" title="Remove item">
-              <i class="fas fa-trash"></i>
-            </button>
-            <button class="quantity-pill-btn quantity-pill-decrease" data-item-id="${itemId}" title="Decrease quantity" ${initialQuantity <= 0 ? 'style="display:none;"' : ''}>
-              <i class="fas fa-minus"></i>
-            </button>
-            <span class="quantity-pill-text" data-item-id="${itemId}">${formatNumber(initialQuantity)} ct</span>
-            <button class="quantity-pill-btn quantity-pill-increase" data-item-id="${itemId}" title="Increase quantity">
-              <i class="fas fa-plus"></i>
-            </button>
-          </div>
+      </div>
+      <div class="item-card-footer">
+        <div class="item-quantity-control">
+          <button class="quantity-pill-btn quantity-pill-remove" data-item-id="${itemId}" title="Remove item">
+            <i class="fas fa-trash"></i>
+          </button>
+          <button class="quantity-pill-btn quantity-pill-decrease" data-item-id="${itemId}" title="Decrease quantity" ${initialQuantity <= 0 ? 'style="display:none;"' : ''}>
+            <i class="fas fa-minus"></i>
+          </button>
+          <span class="quantity-pill-text" data-item-id="${itemId}">${formatNumber(initialQuantity)} ct</span>
+          <button class="quantity-pill-btn quantity-pill-increase" data-item-id="${itemId}" title="Increase quantity">
+            <i class="fas fa-plus"></i>
+          </button>
         </div>
       </div>
     `;
     
-    // Store initial quantity as data attribute for reference
+    // Store initial quantity and InventoryMovementId as data attributes for reference
     movementCard.setAttribute('data-initial-quantity', initialQuantity);
+    movementCard.setAttribute('data-current-quantity', initialQuantity);
     movementCard.setAttribute('data-item-id', itemId);
+    movementCard.setAttribute('data-inventory-movement-id', inventoryMovementId);
     
     // Add quantity control handlers
     const quantityPill = movementCard.querySelector('.item-quantity-control');
@@ -948,6 +954,28 @@ function renderMovementCards(movements, imageMap = {}) {
     const removeBtn = movementCard.querySelector('.quantity-pill-remove');
     
     let currentQuantity = initialQuantity;
+    
+    // Function to update quantity display
+    const updateQuantityDisplay = () => {
+      if (quantityText) {
+        quantityText.textContent = `${formatNumber(currentQuantity)} ct`;
+      }
+      
+      // Show/hide decrease button based on quantity
+      if (decreaseBtn) {
+        decreaseBtn.style.display = currentQuantity > 0 ? 'inline-flex' : 'none';
+      }
+      
+      // Update card data attribute
+      movementCard.setAttribute('data-current-quantity', currentQuantity);
+      
+      // Visual feedback for removed items
+      if (currentQuantity === 0) {
+        movementCard.style.opacity = '0.5';
+      } else {
+        movementCard.style.opacity = '1';
+      }
+    };
     
     // Increase quantity
     if (increaseBtn) {
@@ -973,8 +1001,6 @@ function renderMovementCards(movements, imageMap = {}) {
         e.stopPropagation(); // Prevent card click
         currentQuantity = 0;
         updateQuantityDisplay();
-        // Optionally hide or mark the card as removed
-        movementCard.style.opacity = '0.5';
         logToConsole(`Item ${itemId} marked for removal`, 'info');
       });
     }
@@ -1003,7 +1029,7 @@ function renderMovementCards(movements, imageMap = {}) {
 
 // Submit button handler
 if (submitChangesBtn) {
-  submitChangesBtn.addEventListener('click', async () => {
+    submitChangesBtn.addEventListener('click', async () => {
     if (!movementsContainer) return;
     
     // Collect all item cards and their updated quantities
@@ -1012,13 +1038,15 @@ if (submitChangesBtn) {
     
     itemCards.forEach(card => {
       const itemId = card.getAttribute('data-item-id');
+      const inventoryMovementId = card.getAttribute('data-inventory-movement-id');
       const currentQuantity = parseFloat(card.getAttribute('data-current-quantity')) || 0;
       const initialQuantity = parseFloat(card.getAttribute('data-initial-quantity')) || 0;
       
-      // Only include items with changed quantities or removed items
+      // Only include items with changed quantities
       if (currentQuantity !== initialQuantity) {
         updates.push({
           itemId: itemId,
+          inventoryMovementId: inventoryMovementId,
           quantity: currentQuantity,
           initialQuantity: initialQuantity
         });
@@ -1031,15 +1059,92 @@ if (submitChangesBtn) {
       return;
     }
     
-    status('Preparing to submit changes...', 'info');
-    logToConsole(`Preparing to submit ${updates.length} item update(s)`, 'info');
-    logToConsole('Updates:', 'info');
-    logToConsole(JSON.stringify(updates, null, 2), 'info');
+    status('Submitting changes...', 'info');
+    logToConsole(`\n=== Submitting ${updates.length} item update(s) ===`, 'info');
     
-    // TODO: Add API call to submit changes
-    // await api('submit-order-changes', { org: orgInput?.value.trim() || '', updates });
+    // Filter updates: only process items with qty > 0 (qty = 0 will use different API later)
+    const updatesToProcess = updates.filter(update => update.quantity > 0);
+    const updatesToSkip = updates.filter(update => update.quantity === 0);
     
-    status(`${updates.length} change(s) ready to submit (API integration pending)`, 'info');
+    if (updatesToSkip.length > 0) {
+      logToConsole(`Skipping ${updatesToSkip.length} item(s) with qty = 0 (different API to be implemented)`, 'info');
+    }
+    
+    if (updatesToProcess.length === 0) {
+      status('No items with quantity > 0 to update', 'info');
+      logToConsole('All updated items have qty = 0. Use different API for removal (to be implemented).', 'info');
+      return;
+    }
+    
+    logToConsole(`Processing ${updatesToProcess.length} item update(s) with qty > 0`, 'info');
+    
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+    
+    // Call update API individually for each item
+    for (const update of updatesToProcess) {
+      try {
+        if (!update.inventoryMovementId) {
+          logToConsole(`Skipping item ${update.itemId}: missing InventoryMovementId`, 'error');
+          errorCount++;
+          errors.push({ itemId: update.itemId, error: 'Missing InventoryMovementId' });
+          continue;
+        }
+        
+        const apiPayload = {
+          org: orgInput?.value.trim() || '',
+          inventoryMovementId: update.inventoryMovementId,
+          finalOrderQty: update.quantity
+        };
+        
+        logToConsole(`\nUpdating item ${update.itemId}:`, 'info');
+        logToConsole(`  InventoryMovementId: ${update.inventoryMovementId}`, 'info');
+        logToConsole(`  FinalOrderQty: ${update.quantity} (was ${update.initialQuantity})`, 'info');
+        
+        const res = await api('save-suggested-order-line', apiPayload);
+        
+        if (res.success) {
+          successCount++;
+          logToConsole(`  ✓ Successfully updated item ${update.itemId}`, 'success');
+        } else {
+          errorCount++;
+          const errorMsg = res.error || 'Unknown error';
+          errors.push({ itemId: update.itemId, error: errorMsg });
+          logToConsole(`  ✗ Failed to update item ${update.itemId}: ${errorMsg}`, 'error');
+        }
+      } catch (error) {
+        errorCount++;
+        const errorMsg = error.message || 'Unknown error';
+        errors.push({ itemId: update.itemId, error: errorMsg });
+        logToConsole(`  ✗ Error updating item ${update.itemId}: ${errorMsg}`, 'error');
+        logToConsole(`  Error stack: ${error.stack}`, 'error');
+      }
+    }
+    
+    logToConsole(`\n=== Submission Complete ===`, 'info');
+    logToConsole(`Success: ${successCount} | Errors: ${errorCount} | Skipped (qty=0): ${updatesToSkip.length}`, successCount === updatesToProcess.length ? 'success' : 'error');
+    
+    if (successCount > 0) {
+      // Update initial quantities to current for successfully updated items
+      updatesToProcess.forEach(update => {
+        if (!errors.find(e => e.itemId === update.itemId)) {
+          const card = Array.from(itemCards).find(c => c.getAttribute('data-item-id') === update.itemId);
+          if (card) {
+            card.setAttribute('data-initial-quantity', update.quantity);
+          }
+        }
+      });
+      
+      status(`Successfully updated ${successCount} item(s)`, successCount === updatesToProcess.length ? 'success' : 'warning');
+    } else {
+      status(`Failed to update items. Check console for details.`, 'error');
+    }
+    
+    if (errors.length > 0) {
+      logToConsole(`\nErrors:`, 'error');
+      logToConsole(JSON.stringify(errors, null, 2), 'error');
+    }
   });
 }
 
