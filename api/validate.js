@@ -266,7 +266,9 @@ export default async function handler(req, res) {
         Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
         Template: {
           ItemId: null,
-          ItemDescription: null,
+          InventoryMovementDetail: {
+            ItemDescription: null
+          },
           FinalOrderUnits: null,
           OnHandQuantity: null,
           PeriodForecast: null

@@ -624,8 +624,18 @@ function renderOrderCards(orders) {
       ` : ''}
     `;
     
+    // Store SubGroup and OrderStatus as data attributes for use in items header
+    if (subGroup) {
+      orderCard.setAttribute('data-subgroup', subGroup);
+    }
+    if (orderStatus) {
+      orderCard.setAttribute('data-order-status', orderStatus);
+    }
+    
     // Add click handler for order card to load inventory movements
-    orderCard.addEventListener('click', async () => {
+    orderCard.addEventListener('click', async (event) => {
+      // Store reference to this card for header info
+      window.currentOrderCard = orderCard;
       logToConsole(`Order card clicked: ${orderId}`, 'info');
       
       if (!token) {
@@ -682,7 +692,9 @@ function renderOrderCards(orders) {
           Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
           Template: {
             ItemId: null,
-            ItemDescription: null,
+            InventoryMovementDetail: {
+              ItemDescription: null
+            },
             FinalOrderUnits: null,
             OnHandQuantity: null,
             PeriodForecast: null
@@ -739,6 +751,28 @@ function renderOrderCards(orders) {
         status(`Found ${movements.length} item(s)`, 'success');
         logToConsole(`Loaded ${movements.length} inventory movement(s)`, 'success');
         
+        // Update header with Store, Department, and Order Status
+        const itemsHeaderStoreId = document.getElementById('itemsHeaderStoreId');
+        const itemsHeaderDepartment = document.getElementById('itemsHeaderDepartment');
+        const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+        
+        // Get the clicked order card from window storage
+        const clickedOrderCard = window.currentOrderCard || orderCard;
+        
+        if (itemsHeaderStoreId) {
+          itemsHeaderStoreId.textContent = locationId || storeId || 'N/A';
+        }
+        // Get Department from the order's SubGroup
+        if (itemsHeaderDepartment) {
+          const department = clickedOrderCard ? (clickedOrderCard.getAttribute('data-subgroup') || 'N/A') : 'N/A';
+          itemsHeaderDepartment.textContent = department;
+        }
+        // Get Order Status from the order
+        if (itemsHeaderOrderStatus) {
+          const orderStatus = clickedOrderCard ? (clickedOrderCard.getAttribute('data-order-status') || 'N/A') : 'N/A';
+          itemsHeaderOrderStatus.textContent = orderStatus;
+        }
+        
         // Render movement cards
         renderMovementCards(movements);
         
@@ -767,39 +801,35 @@ function renderMovementCards(movements) {
   
   movements.forEach((movement, index) => {
     const movementCard = document.createElement('div');
-    movementCard.className = 'order-card';
+    movementCard.className = 'item-card';
     
     // Extract movement details (adjust field names based on actual API response)
     const itemId = movement.ItemId || `Item ${index + 1}`;
-    const itemDescription = movement.ItemDescription || '';
+    // Get ItemDescription from nested InventoryMovementDetail structure
+    const itemDescription = movement.InventoryMovementDetail?.ItemDescription || movement.ItemDescription || '';
     const finalOrderUnits = movement.FinalOrderUnits || movement.FinalOrderQty || '';
     const onHandQuantity = movement.OnHandQuantity || movement.OnHandQty || '';
     const periodForecast = movement.PeriodForecast || '';
+    // Price might be in different fields - check common locations
+    const price = movement.Price || movement.UnitPrice || movement.ItemPrice || null;
     
     movementCard.innerHTML = `
-      <div class="order-card-header">
-        <div>
-          <h4 class="order-card-title">${itemDescription || itemId}</h4>
-          <p class="order-card-id">Item ID: ${itemId}</p>
+      <div class="item-card-content">
+        <div class="item-card-left">
+          <div class="item-image-placeholder"></div>
         </div>
-      </div>
-      <div class="order-card-details">
-        ${itemDescription ? `<div class="order-card-detail-row">
-          <span class="order-card-detail-label">Description:</span>
-          <span class="order-card-detail-value">${itemDescription}</span>
-        </div>` : ''}
-        ${finalOrderUnits !== '' ? `<div class="order-card-detail-row">
-          <span class="order-card-detail-label">Final Order Units:</span>
-          <span class="order-card-detail-value">${formatNumber(finalOrderUnits)}</span>
-        </div>` : ''}
-        ${onHandQuantity !== '' ? `<div class="order-card-detail-row">
-          <span class="order-card-detail-label">On Hand Quantity:</span>
-          <span class="order-card-detail-value">${formatNumber(onHandQuantity)}</span>
-        </div>` : ''}
-        ${periodForecast !== '' ? `<div class="order-card-detail-row">
-          <span class="order-card-detail-label">Period Forecast:</span>
-          <span class="order-card-detail-value">${formatNumber(periodForecast)}</span>
-        </div>` : ''}
+        <div class="item-card-center">
+          <div class="item-card-title">${itemId} - ${itemDescription || 'No Description'}</div>
+          <div class="item-card-details">
+            ${finalOrderUnits !== '' ? `<div class="item-detail-line">Quantity: ${formatNumber(finalOrderUnits)}</div>` : ''}
+            ${price !== null ? `<div class="item-detail-line">Price: ${formatCurrency(price)}</div>` : ''}
+            ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
+            ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
+          </div>
+        </div>
+        <div class="item-card-right">
+          <i class="fas fa-chevron-right item-card-arrow"></i>
+        </div>
       </div>
     `;
     
