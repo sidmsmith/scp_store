@@ -586,14 +586,9 @@ function renderOrderCards(orders) {
       <div class="order-card-header">
         <div>
           <h4 class="order-card-title">Suggested Order ${index + 1}</h4>
-          <p class="order-card-id">ID: ${orderId}</p>
         </div>
       </div>
       <div class="order-card-details">
-        ${locationId ? `<div class="order-card-detail-row">
-          <span class="order-card-detail-label">Location:</span>
-          <span class="order-card-detail-value">${locationId}</span>
-        </div>` : ''}
         ${sourceLocationId ? `<div class="order-card-detail-row">
           <span class="order-card-detail-label">Source Location:</span>
           <span class="order-card-detail-value">${sourceLocationId}</span>
