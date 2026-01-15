@@ -293,6 +293,42 @@ export default async function handler(req, res) {
     }
   }
 
+  // === REVIEW INVENTORY MOVEMENT ===
+  if (action === 'review-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { sourceLocationId, locationId } = req.body;
+    if (!sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "SourceLocationId and LocationId required" });
+    }
+
+    try {
+      const payload = {
+        ItemId: null,
+        SourceLocationId: sourceLocationId,
+        LocationId: locationId,
+        RelationType: "Regular",
+        BracketId: null,
+        executeBracket: false,
+        CancelReview: false,
+        StartReview: true,
+        UseLatest: false
+      };
+
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      return res.json({ success: true, result });
+    } catch (error) {
+      await sendHAMessage('review_inventory_movement_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // === SAVE SUGGESTED ORDER LINE ===
   if (action === 'save-suggested-order-line') {
     const token = req.headers.authorization?.split(' ')[1];
