@@ -314,7 +314,8 @@ if (suggestedOrdersCard) {
           InventoryMovementSummaryId: null,
           OrderStatus: {
             OrderStatusId: null
-          }
+          },
+          MovementSummaryFactors: null
         }
       };
       logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
@@ -411,6 +412,44 @@ if (backToCardsBtn) {
   });
 }
 
+// Parse MovementSummaryFactors CLOB to extract RequiredTotals
+function parseRequiredTotals(movementSummaryFactors) {
+  try {
+    if (!movementSummaryFactors) return null;
+    
+    // MovementSummaryFactors is a CLOB (string) that may contain JSON
+    // Try to parse it as JSON
+    let factors = null;
+    if (typeof movementSummaryFactors === 'string') {
+      factors = JSON.parse(movementSummaryFactors);
+    } else if (typeof movementSummaryFactors === 'object') {
+      factors = movementSummaryFactors;
+    }
+    
+    // Extract RequiredTotals if present
+    if (factors && factors.RequiredTotals) {
+      return factors.RequiredTotals;
+    }
+    
+    return null;
+  } catch (error) {
+    logToConsole(`Error parsing MovementSummaryFactors: ${error.message}`, 'error');
+    return null;
+  }
+}
+
+// Format currency value
+function formatCurrency(value) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  return `$${parseFloat(value).toFixed(2)}`;
+}
+
+// Format number value
+function formatNumber(value) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  return parseFloat(value).toFixed(0);
+}
+
 // Render order cards
 function renderOrderCards(orders) {
   if (!ordersContainer) return;
@@ -429,6 +468,11 @@ function renderOrderCards(orders) {
     const orderStatus = order.OrderStatus?.OrderStatusId || order.OrderStatus || '';
     const quantity = order.Quantity || order.Amount || '';
     const itemCount = order.ItemCount || order.Items?.length || '';
+    
+    // Parse MovementSummaryFactors to get RequiredTotals
+    const requiredTotals = parseRequiredTotals(order.MovementSummaryFactors);
+    const totalCost = requiredTotals?.USD || null;
+    const totalUnits = requiredTotals?.EA || null;
     
     orderCard.innerHTML = `
       <div class="order-card-header">
@@ -463,6 +507,18 @@ function renderOrderCards(orders) {
           <span class="order-card-detail-value">${itemCount}</span>
         </div>` : ''}
       </div>
+      ${(totalCost !== null || totalUnits !== null) ? `
+      <div class="order-card-totals">
+        ${totalCost !== null ? `<div class="order-card-total-row">
+          <span class="order-card-total-label">Total Cost:</span>
+          <span class="order-card-total-value">${formatCurrency(totalCost)}</span>
+        </div>` : ''}
+        ${totalUnits !== null ? `<div class="order-card-total-row">
+          <span class="order-card-total-label">Total Units:</span>
+          <span class="order-card-total-value">${formatNumber(totalUnits)}</span>
+        </div>` : ''}
+      </div>
+      ` : ''}
     `;
     
     // Add click handler for order card (placeholder for future functionality)

@@ -230,7 +230,8 @@ export default async function handler(req, res) {
           InventoryMovementSummaryId: null,
           OrderStatus: {
             OrderStatusId: null
-          }
+          },
+          MovementSummaryFactors: null
         }
       };
 

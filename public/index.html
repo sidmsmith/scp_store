@@ -569,6 +569,39 @@
       color: var(--text);
     }
     
+    /* Order Card Totals Section */
+    .order-card-totals {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .order-card-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .order-card-total-label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .order-card-total-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    /* Light theme: Totals styling */
+    :root.theme-light .order-card-totals {
+      border-top: 1px solid #e0e0e0;
+    }
+    
     /* Responsive order card sizing */
     @media (min-width: 768px) {
       .order-card {
