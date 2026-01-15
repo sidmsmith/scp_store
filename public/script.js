@@ -1,5 +1,6 @@
 // public/script.js
 const orgInput = document.getElementById('org');
+const storeIdInput = document.getElementById('storeId');
 const statusEl = document.getElementById('status');
 const themeSelectorBtn = document.getElementById('themeSelectorBtn');
 const themeModal = new bootstrap.Modal(document.getElementById('themeModal'));
@@ -30,23 +31,21 @@ let forecastFileHeader = null; // Store forecast file header row
 let locationFileData = null; // Store parsed location file data
 let locationFileHeader = null; // Store location file header row
 
-// File section elements
-const fileSection = document.getElementById('fileSection');
-const forecastFileInput = document.getElementById('forecast_file');
-const forecastFileDisplay = document.getElementById('forecast_file_display');
-const forecastFileLoadBtn = document.getElementById('forecastFileLoadBtn');
-const forecastFileStatus = document.getElementById('forecastFileStatus');
-const uploadForecastBtn = document.getElementById('uploadForecastBtn');
-const locationFileInput = document.getElementById('location_file');
-const locationFileDisplay = document.getElementById('location_file_display');
-const locationFileLoadBtn = document.getElementById('locationFileLoadBtn');
-const locationFileStatus = document.getElementById('locationFileStatus');
-const uploadLocationsBtn = document.getElementById('uploadLocationsBtn');
+// Store ID section elements
+const storeIdSection = document.getElementById('storeIdSection');
+const cardsSection = document.getElementById('cardsSection');
+const logoContainer = document.getElementById('logoContainer');
+const suggestedOrdersCard = document.getElementById('suggestedOrdersCard');
+const opportunityBuysCard = document.getElementById('opportunityBuysCard');
+
+// Console elements (keep for debugging)
 const consoleSection = document.getElementById('consoleSection');
 const consoleEl = document.getElementById('console');
 const consoleToggleBtn = document.getElementById('consoleToggleBtn');
 const consoleToggleContainer = document.getElementById('consoleToggleContainer');
 const consoleCloseBtn = document.getElementById('consoleCloseBtn');
+
+let storeId = null;
 
 // THEME DEFINITIONS
 const themes = {
@@ -153,9 +152,15 @@ async function authenticate() {
   if (!res.success) {
     status(res.error || 'Auth failed', 'error');
     await trackEvent('auth_failed', { org: org || 'unknown', error: res.error || 'Auth failed' });
-    // On auth failure, hide file and console sections, show auth section
-    if (fileSection) {
-      fileSection.style.display = 'none';
+    // On auth failure, hide sections, show auth section
+    if (storeIdSection) {
+      storeIdSection.style.display = 'none';
+    }
+    if (cardsSection) {
+      cardsSection.style.display = 'none';
+    }
+    if (logoContainer) {
+      logoContainer.style.display = 'none';
     }
     if (consoleSection) {
       consoleSection.style.display = 'none';
@@ -180,10 +185,12 @@ async function authenticate() {
     authSection.style.display = 'none';
   }
   
-  // Show file section after authentication
-  if (fileSection) {
-    fileSection.style.display = 'block';
+  // Show Store ID section after authentication
+  if (storeIdSection) {
+    storeIdSection.style.display = 'block';
+    storeIdInput?.focus();
   }
+  
   // Show console toggle button after authentication (console stays hidden by default)
   if (consoleToggleContainer) {
     consoleToggleContainer.style.display = 'block';
@@ -195,6 +202,72 @@ orgInput?.addEventListener('keypress', async e => {
   if (e.key !== 'Enter') return;
   await authenticate();
 });
+
+// Store ID submit handler
+async function submitStoreId() {
+  const storeIdValue = storeIdInput?.value.trim();
+  if (!storeIdValue) {
+    status('Store ID required', 'error');
+    return false;
+  }
+
+  status('Loading store data...', 'info');
+  storeId = storeIdValue;
+  
+  // Track store ID entered
+  await trackEvent('store_id_entered', { 
+    org: orgInput?.value.trim() || 'unknown',
+    store_id: storeIdValue 
+  });
+  
+  // Hide Store ID section
+  if (storeIdSection) {
+    storeIdSection.style.display = 'none';
+  }
+  
+  // Show logo and cards section
+  if (logoContainer) {
+    logoContainer.style.display = 'block';
+  }
+  if (cardsSection) {
+    cardsSection.style.display = 'block';
+  }
+  
+  status('Store loaded', 'success');
+  return true;
+}
+
+storeIdInput?.addEventListener('keypress', async e => {
+  if (e.key !== 'Enter') return;
+  await submitStoreId();
+});
+
+// Card click handlers
+if (suggestedOrdersCard) {
+  suggestedOrdersCard.addEventListener('click', async () => {
+    status('Opening Suggested Orders...', 'info');
+    await trackEvent('card_clicked', { 
+      org: orgInput?.value.trim() || 'unknown',
+      store_id: storeId || 'unknown',
+      card_type: 'suggested_orders'
+    });
+    // TODO: Add card click functionality
+    logToConsole('Suggested Orders card clicked', 'info');
+  });
+}
+
+if (opportunityBuysCard) {
+  opportunityBuysCard.addEventListener('click', async () => {
+    status('Opening Opportunity Buys...', 'info');
+    await trackEvent('card_clicked', { 
+      org: orgInput?.value.trim() || 'unknown',
+      store_id: storeId || 'unknown',
+      card_type: 'opportunity_buys'
+    });
+    // TODO: Add card click functionality
+    logToConsole('Opportunity Buys card clicked', 'info');
+  });
+}
 
 // Auto-authenticate if Organization or ORG parameter is provided in URL
 window.addEventListener('load', async () => {
@@ -213,9 +286,15 @@ window.addEventListener('load', async () => {
     // File and console sections will only show if auth succeeds
     const authSuccess = await authenticate();
     if (!authSuccess) {
-      // Auth failed - keep file and console sections hidden
-      if (fileSection) {
-        fileSection.style.display = 'none';
+      // Auth failed - keep sections hidden
+      if (storeIdSection) {
+        storeIdSection.style.display = 'none';
+      }
+      if (cardsSection) {
+        cardsSection.style.display = 'none';
+      }
+      if (logoContainer) {
+        logoContainer.style.display = 'none';
       }
       if (consoleSection) {
         consoleSection.style.display = 'none';
@@ -225,13 +304,19 @@ window.addEventListener('load', async () => {
       }
     }
   } else {
-    // No URL parameter - show auth section, hide file/console sections
+    // No URL parameter - show auth section, hide other sections
     const authSection = document.getElementById('authSection');
     if (authSection) {
       authSection.style.display = 'block';
     }
-    if (fileSection) {
-      fileSection.style.display = 'none';
+    if (storeIdSection) {
+      storeIdSection.style.display = 'none';
+    }
+    if (cardsSection) {
+      cardsSection.style.display = 'none';
+    }
+    if (logoContainer) {
+      logoContainer.style.display = 'none';
     }
     if (consoleSection) {
       consoleSection.style.display = 'none';
