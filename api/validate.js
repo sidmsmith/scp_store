@@ -329,6 +329,38 @@ export default async function handler(req, res) {
     }
   }
 
+  // === CLEAR SUGGESTED ORDER QUANTITY ===
+  if (action === 'clear-soq') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemId, sourceLocationId, locationId } = req.body;
+    if (!itemId || !sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "ItemId, SourceLocationId, and LocationId required" });
+    }
+
+    try {
+      const payload = [
+        {
+          ItemId: itemId,
+          LocationId: locationId,
+          SourceLocationId: sourceLocationId
+        }
+      ];
+
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      return res.json({ success: true, result });
+    } catch (error) {
+      await sendHAMessage('clear_soq_failed', { org: org || 'unknown', item_id: itemId || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // === SAVE SUGGESTED ORDER LINE ===
   if (action === 'save-suggested-order-line') {
     const token = req.headers.authorization?.split(' ')[1];

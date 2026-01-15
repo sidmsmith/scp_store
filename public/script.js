@@ -1113,27 +1113,23 @@ if (submitChangesBtn) {
     status('Submitting changes...', 'info');
     logToConsole(`\n=== Submitting ${updates.length} item update(s) ===`, 'info');
     
-    // Filter updates: only process items with qty > 0 (qty = 0 will use different API later)
+    // Filter updates: process items with qty > 0 first, then qty = 0
     const updatesToProcess = updates.filter(update => update.quantity > 0);
-    const updatesToSkip = updates.filter(update => update.quantity === 0);
-    
-    if (updatesToSkip.length > 0) {
-      logToConsole(`Skipping ${updatesToSkip.length} item(s) with qty = 0 (different API to be implemented)`, 'info');
-    }
-    
-    if (updatesToProcess.length === 0) {
-      status('No items with quantity > 0 to update', 'info');
-      logToConsole('All updated items have qty = 0. Use different API for removal (to be implemented).', 'info');
-      return;
-    }
+    const updatesToClear = updates.filter(update => update.quantity === 0);
     
     logToConsole(`Processing ${updatesToProcess.length} item update(s) with qty > 0`, 'info');
+    if (updatesToClear.length > 0) {
+      logToConsole(`Will clear ${updatesToClear.length} item(s) with qty = 0 after updates`, 'info');
+    }
     
     let successCount = 0;
     let errorCount = 0;
+    let clearSuccessCount = 0;
+    let clearErrorCount = 0;
     const errors = [];
+    const clearErrors = [];
     
-    // Call update API individually for each item
+    // Call update API individually for each item with qty > 0
     for (const update of updatesToProcess) {
       try {
         if (!update.inventoryMovementId) {
@@ -1173,11 +1169,10 @@ if (submitChangesBtn) {
       }
     }
     
-    logToConsole(`\n=== Submission Complete ===`, 'info');
-    logToConsole(`Success: ${successCount} | Errors: ${errorCount} | Skipped (qty=0): ${updatesToSkip.length}`, successCount === updatesToProcess.length ? 'success' : 'error');
+    logToConsole(`\n=== Updates Complete: ${successCount} success, ${errorCount} errors ===`, successCount === updatesToProcess.length ? 'success' : 'error');
     
+    // Update initial quantities to current for successfully updated items with qty > 0
     if (successCount > 0) {
-      // Update initial quantities to current for successfully updated items
       updatesToProcess.forEach(update => {
         if (!errors.find(e => e.itemId === update.itemId)) {
           const card = Array.from(itemCards).find(c => c.getAttribute('data-item-id') === update.itemId);
@@ -1186,16 +1181,81 @@ if (submitChangesBtn) {
           }
         }
       });
-      
-      status(`Successfully updated ${successCount} item(s)`, successCount === updatesToProcess.length ? 'success' : 'warning');
-    } else {
-      status(`Failed to update items. Check console for details.`, 'error');
     }
     
-    if (errors.length > 0) {
-      logToConsole(`\nErrors:`, 'error');
-      logToConsole(JSON.stringify(errors, null, 2), 'error');
+    // Now process items with qty = 0 (clear API)
+    if (updatesToClear.length > 0) {
+      logToConsole(`\n=== Clearing ${updatesToClear.length} item(s) with qty = 0 ===`, 'info');
+      
+      for (const update of updatesToClear) {
+        try {
+          if (!update.itemId) {
+            logToConsole(`Skipping clear: missing ItemId`, 'error');
+            clearErrorCount++;
+            clearErrors.push({ itemId: update.itemId || 'unknown', error: 'Missing ItemId' });
+            continue;
+          }
+          
+          const clearApiPayload = {
+            org: orgInput?.value.trim() || '',
+            itemId: update.itemId,
+            sourceLocationId: sourceLocationId,
+            locationId: locationId
+          };
+          
+          logToConsole(`\nClearing item ${update.itemId}:`, 'info');
+          logToConsole(`  ItemId: ${update.itemId}`, 'info');
+          logToConsole(`  LocationId: ${locationId}`, 'info');
+          logToConsole(`  SourceLocationId: ${sourceLocationId}`, 'info');
+          
+          const clearRes = await api('clear-soq', clearApiPayload);
+          
+          if (clearRes.success) {
+            clearSuccessCount++;
+            logToConsole(`  ✓ Successfully cleared item ${update.itemId}`, 'success');
+          } else {
+            clearErrorCount++;
+            const errorMsg = clearRes.error || 'Unknown error';
+            clearErrors.push({ itemId: update.itemId, error: errorMsg });
+            logToConsole(`  ✗ Failed to clear item ${update.itemId}: ${errorMsg}`, 'error');
+          }
+        } catch (error) {
+          clearErrorCount++;
+          const errorMsg = error.message || 'Unknown error';
+          clearErrors.push({ itemId: update.itemId, error: errorMsg });
+          logToConsole(`  ✗ Error clearing item ${update.itemId}: ${errorMsg}`, 'error');
+          logToConsole(`  Error stack: ${error.stack}`, 'error');
+        }
+      }
+      
+      logToConsole(`\n=== Clears Complete: ${clearSuccessCount} success, ${clearErrorCount} errors ===`, clearSuccessCount === updatesToClear.length ? 'success' : 'error');
+      
+      // Update initial quantities to 0 for successfully cleared items
+      if (clearSuccessCount > 0) {
+        updatesToClear.forEach(update => {
+          if (!clearErrors.find(e => e.itemId === update.itemId)) {
+            const card = Array.from(itemCards).find(c => c.getAttribute('data-item-id') === update.itemId);
+            if (card) {
+              card.setAttribute('data-initial-quantity', 0);
+            }
+          }
+        });
+      }
     }
+    
+    logToConsole(`\n=== Total Submission Complete ===`, 'info');
+    const totalSuccess = successCount + clearSuccessCount;
+    const totalErrors = errorCount + clearErrorCount;
+    logToConsole(`Total Success: ${totalSuccess} | Total Errors: ${totalErrors}`, totalErrors === 0 ? 'success' : 'error');
+    
+    if (errors.length > 0 || clearErrors.length > 0) {
+      logToConsole(`\nAll Errors:`, 'error');
+      logToConsole(JSON.stringify([...errors, ...clearErrors], null, 2), 'error');
+    }
+    
+    // Show completion modal
+    const totalUpdated = totalSuccess;
+    showSubmissionModal(totalUpdated, totalErrors);
   });
 }
 
