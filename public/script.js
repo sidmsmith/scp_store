@@ -813,6 +813,9 @@ function renderMovementCards(movements) {
     const onHandQuantity = movement.OnHandQuantity || movement.OnHandQty || '';
     const periodForecast = movement.PeriodForecast || '';
     
+    // Initialize quantity from FinalOrderUnits
+    const initialQuantity = finalOrderUnits !== '' ? parseFloat(finalOrderUnits) : 0;
+    
     movementCard.innerHTML = `
       <div class="item-card-content">
         <div class="item-card-left">
@@ -831,7 +834,80 @@ function renderMovementCards(movements) {
           <i class="fas fa-chevron-right item-card-arrow"></i>
         </div>
       </div>
+      <div class="item-quantity-control">
+        <button class="quantity-pill-btn quantity-pill-remove" data-item-id="${itemId}" title="Remove item">
+          <i class="fas fa-trash"></i>
+        </button>
+        <button class="quantity-pill-btn quantity-pill-decrease" data-item-id="${itemId}" title="Decrease quantity" ${initialQuantity <= 0 ? 'style="display:none;"' : ''}>
+          <i class="fas fa-minus"></i>
+        </button>
+        <span class="quantity-pill-text" data-item-id="${itemId}">${formatNumber(initialQuantity)} ct</span>
+        <button class="quantity-pill-btn quantity-pill-increase" data-item-id="${itemId}" title="Increase quantity">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
     `;
+    
+    // Store initial quantity as data attribute for reference
+    movementCard.setAttribute('data-initial-quantity', initialQuantity);
+    movementCard.setAttribute('data-item-id', itemId);
+    
+    // Add quantity control handlers
+    const quantityPill = movementCard.querySelector('.item-quantity-control');
+    const quantityText = movementCard.querySelector('.quantity-pill-text');
+    const increaseBtn = movementCard.querySelector('.quantity-pill-increase');
+    const decreaseBtn = movementCard.querySelector('.quantity-pill-decrease');
+    const removeBtn = movementCard.querySelector('.quantity-pill-remove');
+    
+    let currentQuantity = initialQuantity;
+    
+    // Increase quantity
+    if (increaseBtn) {
+      increaseBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card click
+        currentQuantity = Math.max(0, currentQuantity + 1);
+        updateQuantityDisplay();
+      });
+    }
+    
+    // Decrease quantity
+    if (decreaseBtn) {
+      decreaseBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card click
+        currentQuantity = Math.max(0, currentQuantity - 1);
+        updateQuantityDisplay();
+      });
+    }
+    
+    // Remove item
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card click
+        currentQuantity = 0;
+        updateQuantityDisplay();
+        // Optionally hide or mark the card as removed
+        movementCard.style.opacity = '0.5';
+        logToConsole(`Item ${itemId} marked for removal`, 'info');
+      });
+    }
+    
+    function updateQuantityDisplay() {
+      if (quantityText) {
+        quantityText.textContent = `${formatNumber(currentQuantity)} ct`;
+      }
+      
+      // Show/hide decrease button based on quantity
+      if (decreaseBtn) {
+        if (currentQuantity > 0) {
+          decreaseBtn.style.display = 'inline-flex';
+        } else {
+          decreaseBtn.style.display = 'none';
+        }
+      }
+      
+      // Store updated quantity
+      movementCard.setAttribute('data-current-quantity', currentQuantity);
+    }
     
     movementsContainer.appendChild(movementCard);
   });

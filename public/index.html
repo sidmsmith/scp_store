@@ -734,6 +734,61 @@
       color: var(--primary);
     }
     
+    /* Quantity Control Pill */
+    .item-quantity-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: var(--primary);
+      border-radius: 50px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .quantity-pill-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+      padding: 0;
+    }
+    
+    .quantity-pill-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .quantity-pill-btn:active {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .quantity-pill-btn i {
+      font-size: 0.875rem;
+    }
+    
+    .quantity-pill-remove i {
+      font-size: 0.875rem;
+    }
+    
+    .quantity-pill-text {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      min-width: 50px;
+      text-align: center;
+      user-select: none;
+    }
+    
     /* Responsive item card sizing */
     @media (min-width: 768px) {
       .item-card {
@@ -748,6 +803,16 @@
       .item-image-placeholder {
         width: 80px;
         height: 80px;
+      }
+      
+      .quantity-pill-btn {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .quantity-pill-text {
+        font-size: 1rem;
+        min-width: 60px;
       }
     }
     
