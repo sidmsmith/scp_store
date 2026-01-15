@@ -258,11 +258,20 @@ async function submitStoreId() {
     cardsSection.style.display = 'block';
   }
   
-  // Show main title
-  const mainTitle = document.getElementById('mainTitle');
-  if (mainTitle) {
-    mainTitle.style.display = 'block';
-  }
+    // Hide main title, show store header for cards page
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'none';
+    }
+    
+    const storeHeaderCards = document.getElementById('storeHeaderCards');
+    const cardsHeaderStoreId = document.getElementById('cardsHeaderStoreId');
+    if (storeHeaderCards && storeIdValue) {
+      storeHeaderCards.style.display = 'block';
+    }
+    if (cardsHeaderStoreId && storeIdValue) {
+      cardsHeaderStoreId.textContent = storeIdValue;
+    }
   
   status('Store loaded', 'success');
   return true;
@@ -456,10 +465,14 @@ if (backToStoreBtn) {
       inventoryMovementSection.style.display = 'none';
     }
     
-    // Show main title and hide store header
+    // Hide store header cards, show main title
     const mainTitle = document.getElementById('mainTitle');
     if (mainTitle) {
       mainTitle.style.display = 'block';
+    }
+    const storeHeaderCards = document.getElementById('storeHeaderCards');
+    if (storeHeaderCards) {
+      storeHeaderCards.style.display = 'none';
     }
     
     // Show Store ID input section to allow changing store
@@ -496,11 +509,20 @@ if (backToCardsBtn) {
       cardsSection.style.display = 'block';
     }
     
-    // Show main title when back to cards
-    const mainTitle = document.getElementById('mainTitle');
-    if (mainTitle) {
-      mainTitle.style.display = 'block';
-    }
+      // Hide main title, show store header for cards page
+      const mainTitle = document.getElementById('mainTitle');
+      if (mainTitle) {
+        mainTitle.style.display = 'none';
+      }
+      
+      const storeHeaderCards = document.getElementById('storeHeaderCards');
+      const cardsHeaderStoreId = document.getElementById('cardsHeaderStoreId');
+      if (storeHeaderCards && storeId) {
+        storeHeaderCards.style.display = 'block';
+      }
+      if (cardsHeaderStoreId && storeId) {
+        cardsHeaderStoreId.textContent = storeId;
+      }
     
     status('', 'info');
   });
@@ -1010,6 +1032,17 @@ window.addEventListener('load', async () => {
     if (authSection) {
       authSection.style.display = 'block';
     }
+    
+    // Show main title, hide store header
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'block';
+    }
+    const storeHeaderCards = document.getElementById('storeHeaderCards');
+    if (storeHeaderCards) {
+      storeHeaderCards.style.display = 'none';
+    }
+    
     if (storeIdSection) {
       storeIdSection.style.display = 'none';
     }

@@ -666,14 +666,15 @@
     
     .item-card-content {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 1rem;
       position: relative;
+      min-height: 100px;
     }
     
     .item-card-left {
       flex-shrink: 0;
-      align-self: flex-end;
+      align-self: center;
     }
     
     .item-image-placeholder {
@@ -724,6 +725,7 @@
       align-items: center;
       justify-content: center;
       padding-left: 1rem;
+      align-self: center;
     }
     
     /* Quantity Control Pill */
@@ -824,15 +826,20 @@
     }
     
     #submitChangesBtn {
-      min-width: 200px;
+      min-width: 150px;
       font-weight: 600;
-      padding: 0.75rem 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      padding: 0.5rem 1.5rem;
+      font-size: 0.9375rem;
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     
     #submitChangesBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      background: var(--success-hover) !important;
+      border-color: var(--success-hover) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     
     /* Adjust orders container to account for sticky submit button */
@@ -859,6 +866,13 @@
       </div>
 
       <h2 id="mainTitle" class="text-center mb-4">SCP Store v1.0.0</h2>
+      
+      <!-- Store Header for Cards Page -->
+      <div id="storeHeaderCards" class="store-header-cards mb-3" style="display:none;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center;">
+          <span>Store: <span id="cardsHeaderStoreId"></span></span>
+        </div>
+      </div>
 
       <div id="authSection" class="mb-3">
         <label class="form-label">ORG:</label>
