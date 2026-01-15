@@ -21,6 +21,11 @@ const urlBusinessUnit = businessUnitParam || null;
 // Ensure ORG is blank on load (security) unless from URL
 if (urlOrg) {
   orgInput.value = urlOrg.trim();
+  // Hide auth section immediately if URL parameter provided (will auto-authenticate)
+  const authSection = document.getElementById('authSection');
+  if (authSection) {
+    authSection.style.display = 'none';
+  }
 } else {
   orgInput.value = '';
 }
@@ -845,11 +850,15 @@ window.addEventListener('load', async () => {
   
   // Auto-authenticate if Organization or ORG parameter is provided in URL
   if (urlOrg) {
-    // Auto-authenticate (auth section will be hidden on success, shown on failure)
-    // File and console sections will only show if auth succeeds
+    // Auth section already hidden when URL parameter is present
+    // Auto-authenticate in background (auth section will be shown on failure)
     const authSuccess = await authenticate();
     if (!authSuccess) {
-      // Auth failed - keep sections hidden
+      // Auth failed - show auth section again and hide other sections
+      const authSection = document.getElementById('authSection');
+      if (authSection) {
+        authSection.style.display = 'block';
+      }
       if (storeIdSection) {
         storeIdSection.style.display = 'none';
       }
