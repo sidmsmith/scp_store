@@ -38,6 +38,13 @@ const logoContainer = document.getElementById('logoContainer');
 const suggestedOrdersCard = document.getElementById('suggestedOrdersCard');
 const opportunityBuysCard = document.getElementById('opportunityBuysCard');
 
+// Suggested Orders section elements
+const suggestedOrdersSection = document.getElementById('suggestedOrdersSection');
+const ordersContainer = document.getElementById('ordersContainer');
+const ordersLoading = document.getElementById('ordersLoading');
+const ordersEmpty = document.getElementById('ordersEmpty');
+const backToCardsBtn = document.getElementById('backToCardsBtn');
+
 // Console elements (keep for debugging)
 const consoleSection = document.getElementById('consoleSection');
 const consoleEl = document.getElementById('console');
@@ -249,14 +256,87 @@ storeIdInput?.addEventListener('keypress', async e => {
 // Card click handlers
 if (suggestedOrdersCard) {
   suggestedOrdersCard.addEventListener('click', async () => {
-    status('Opening Suggested Orders...', 'info');
+    if (!token) {
+      status('Please authenticate first', 'error');
+      return;
+    }
+    
+    if (!storeId) {
+      status('Store ID required', 'error');
+      return;
+    }
+    
+    status('Loading suggested orders...', 'info');
     await trackEvent('card_clicked', { 
       org: orgInput?.value.trim() || 'unknown',
       store_id: storeId || 'unknown',
       card_type: 'suggested_orders'
     });
-    // TODO: Add card click functionality
-    logToConsole('Suggested Orders card clicked', 'info');
+    
+    // Hide cards section, show orders section
+    if (cardsSection) {
+      cardsSection.style.display = 'none';
+    }
+    if (suggestedOrdersSection) {
+      suggestedOrdersSection.style.display = 'block';
+    }
+    if (ordersLoading) {
+      ordersLoading.style.display = 'block';
+    }
+    if (ordersEmpty) {
+      ordersEmpty.style.display = 'none';
+    }
+    if (ordersContainer) {
+      ordersContainer.innerHTML = '';
+    }
+    
+    try {
+      // Call API to search inventory movement summary
+      const res = await api('search-inventory-movement-summary', { 
+        org: orgInput?.value.trim() || '',
+        storeId: storeId 
+      });
+      
+      if (ordersLoading) {
+        ordersLoading.style.display = 'none';
+      }
+      
+      if (!res.success) {
+        status(res.error || 'Failed to load orders', 'error');
+        logToConsole(`Error loading suggested orders: ${res.error || 'Unknown error'}`, 'error');
+        if (ordersEmpty) {
+          ordersEmpty.style.display = 'block';
+        }
+        return;
+      }
+      
+      const orders = res.orders || [];
+      
+      if (orders.length === 0) {
+        status('No suggested orders found', 'info');
+        if (ordersEmpty) {
+          ordersEmpty.style.display = 'block';
+        }
+        logToConsole('No suggested orders found for store', 'info');
+        return;
+      }
+      
+      status(`Found ${orders.length} suggested order(s)`, 'success');
+      logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
+      
+      // Render order cards
+      renderOrderCards(orders);
+      
+    } catch (error) {
+      if (ordersLoading) {
+        ordersLoading.style.display = 'none';
+      }
+      status('Error loading orders', 'error');
+      logToConsole(`Error: ${error.message}`, 'error');
+      if (ordersEmpty) {
+        ordersEmpty.style.display = 'block';
+      }
+    }
   });
 }
 
@@ -270,6 +350,83 @@ if (opportunityBuysCard) {
     });
     // TODO: Add card click functionality
     logToConsole('Opportunity Buys card clicked', 'info');
+  });
+}
+
+// Back to cards button handler
+if (backToCardsBtn) {
+  backToCardsBtn.addEventListener('click', () => {
+    if (suggestedOrdersSection) {
+      suggestedOrdersSection.style.display = 'none';
+    }
+    if (cardsSection) {
+      cardsSection.style.display = 'block';
+    }
+    status('', 'info');
+  });
+}
+
+// Render order cards
+function renderOrderCards(orders) {
+  if (!ordersContainer) return;
+  
+  ordersContainer.innerHTML = '';
+  
+  orders.forEach((order, index) => {
+    const orderCard = document.createElement('div');
+    orderCard.className = 'order-card';
+    
+    // Extract order details (adjust field names based on actual API response)
+    const orderId = order.InventoryMovementSummaryId || order.Id || `Order ${index + 1}`;
+    const locationId = order.LocationId || storeId || '';
+    const sourceLocationId = order.SourceLocationId || '';
+    const subGroup = order.SubGroup || '';
+    const orderStatus = order.OrderStatus?.OrderStatusId || order.OrderStatus || '';
+    const quantity = order.Quantity || order.Amount || '';
+    const itemCount = order.ItemCount || order.Items?.length || '';
+    
+    orderCard.innerHTML = `
+      <div class="order-card-header">
+        <div>
+          <h4 class="order-card-title">Suggested Order ${index + 1}</h4>
+          <p class="order-card-id">ID: ${orderId}</p>
+        </div>
+      </div>
+      <div class="order-card-details">
+        ${locationId ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Location:</span>
+          <span class="order-card-detail-value">${locationId}</span>
+        </div>` : ''}
+        ${sourceLocationId ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Source Location:</span>
+          <span class="order-card-detail-value">${sourceLocationId}</span>
+        </div>` : ''}
+        ${subGroup ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Sub Group:</span>
+          <span class="order-card-detail-value">${subGroup}</span>
+        </div>` : ''}
+        ${orderStatus ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Status:</span>
+          <span class="order-card-detail-value">${orderStatus}</span>
+        </div>` : ''}
+        ${quantity ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Quantity:</span>
+          <span class="order-card-detail-value">${quantity}</span>
+        </div>` : ''}
+        ${itemCount ? `<div class="order-card-detail-row">
+          <span class="order-card-detail-label">Items:</span>
+          <span class="order-card-detail-value">${itemCount}</span>
+        </div>` : ''}
+      </div>
+    `;
+    
+    // Add click handler for order card (placeholder for future functionality)
+    orderCard.addEventListener('click', () => {
+      logToConsole(`Order card clicked: ${orderId}`, 'info');
+      // TODO: Add order card click functionality
+    });
+    
+    ordersContainer.appendChild(orderCard);
   });
 }
 

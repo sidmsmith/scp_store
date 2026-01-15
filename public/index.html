@@ -453,6 +453,137 @@
       }
     }
     
+    /* Suggested Orders Section */
+    .suggested-orders-section {
+      margin-top: 1.5rem;
+    }
+    
+    /* Orders Container - Scrollable */
+    .orders-container {
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Mobile-first scrollbar styling */
+    .orders-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .orders-container::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+      border-radius: 4px;
+    }
+    
+    .orders-container::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    
+    .orders-container::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+    
+    /* Light theme scrollbar */
+    :root.theme-light .orders-container::-webkit-scrollbar-track {
+      background: #f5f5f5;
+    }
+    
+    :root.theme-light .orders-container::-webkit-scrollbar-thumb {
+      background: #d0d0d0;
+    }
+    
+    :root.theme-light .orders-container::-webkit-scrollbar-thumb:hover {
+      background: #999999;
+    }
+    
+    /* Order Card */
+    .order-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Light theme: White order cards with shadows */
+    :root.theme-light .order-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border-color: var(--primary);
+    }
+    
+    :root.theme-light .order-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--primary);
+    }
+    
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    
+    .order-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+    
+    .order-card-id {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    
+    .order-card-details {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    
+    .order-card-detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+    
+    .order-card-detail-label {
+      font-weight: 500;
+    }
+    
+    .order-card-detail-value {
+      color: var(--text);
+    }
+    
+    /* Responsive order card sizing */
+    @media (min-width: 768px) {
+      .order-card {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      .order-card-title {
+        font-size: 1.125rem;
+      }
+      
+      .orders-container {
+        max-height: calc(100vh - 250px);
+      }
+    }
+    
     .option-card:hover .option-card-arrow {
       color: var(--primary);
     }
@@ -500,6 +631,28 @@
           <div class="option-card-arrow">
             <i class="fas fa-chevron-right"></i>
           </div>
+        </div>
+      </div>
+
+      <!-- Suggested Orders Section -->
+      <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0" style="color: var(--text); font-size: 1.25rem;">Suggested Orders</h3>
+          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div id="ordersContainer" class="orders-container">
+          <!-- Order cards will be dynamically inserted here -->
+        </div>
+        <div id="ordersLoading" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2" style="color: var(--text-muted);">Loading orders...</p>
+        </div>
+        <div id="ordersEmpty" class="text-center py-4" style="display:none;">
+          <p style="color: var(--text-muted);">No suggested orders found.</p>
         </div>
       </div>
 

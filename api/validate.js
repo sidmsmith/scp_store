@@ -4,8 +4,8 @@ import fetch from 'node-fetch';
 // Home Assistant Configuration
 const HA_WEBHOOK_URL = process.env.HA_WEBHOOK_URL || "http://sidmsmith.zapto.org:8123/api/webhook/manhattan_app_usage";
 const HA_HEADERS = { "Content-Type": "application/json" };
-const APP_NAME = "Import Forecast";
-const APP_VERSION = "0.2.0"; // Match version in index.html title
+const APP_NAME = "SCP Store";
+const APP_VERSION = "1.0.0"; // Match version in index.html title
 
 // Forecast app uses sales2 environment (different from other apps)
 const AUTH_HOST = process.env.MANHATTAN_AUTH_HOST || "sales2-auth.omni.manh.com";
@@ -206,6 +206,46 @@ export default async function handler(req, res) {
       const result = await apiCall('POST', '/ai-forecast/api/ai-forecast/manualForecastEvent/save', token, org, projectionData);
       return res.json({ success: result.error ? false : true, result });
     } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH INVENTORY MOVEMENT SUMMARY (SUGGESTED ORDERS) ===
+  if (action === 'search-inventory-movement-summary') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { storeId } = req.body;
+    if (!storeId) {
+      return res.json({ success: false, error: "Store ID required" });
+    }
+
+    try {
+      const payload = {
+        Query: `LocationId='${storeId}'`,
+        Template: {
+          LocationId: null,
+          SourceLocationId: null,
+          SubGroup: null,
+          InventoryMovementSummaryId: null,
+          OrderStatus: {
+            OrderStatusId: null
+          }
+        }
+      };
+
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      // Extract orders from response (adjust based on actual API response structure)
+      const orders = result.data || result.items || result || [];
+      
+      return res.json({ success: true, orders });
+    } catch (error) {
+      await sendHAMessage('suggested_orders_search_failed', { org: org || 'unknown', store_id: req.body.storeId || 'unknown', error: error.message });
       return res.json({ success: false, error: error.message });
     }
   }
