@@ -237,7 +237,49 @@ async function submitStoreId() {
     return false;
   }
 
-  status('Loading store data...', 'info');
+  status('Validating store...', 'info');
+  
+  // Validate store by calling location search API
+  try {
+    const validatePayload = {
+      org: orgInput?.value.trim() || '',
+      storeId: storeIdValue
+    };
+    
+    logToConsole(`\n=== Validating Store ===`, 'info');
+    logToConsole(`Action: search-location`, 'info');
+    logToConsole(`Endpoint: /itemlocation/api/itemlocation/location/search`, 'info');
+    logToConsole(`Request Payload:`, 'info');
+    logToConsole(JSON.stringify(validatePayload, null, 2), 'info');
+    logToConsole(`Backend will send payload:`, 'info');
+    const backendValidatePayload = {
+      Query: `LocationId IN ('${storeIdValue}')`
+    };
+    logToConsole(JSON.stringify(backendValidatePayload, null, 2), 'info');
+    
+    const validateRes = await api('search-location', validatePayload);
+    
+    logToConsole(`\nValidation API Response:`, 'info');
+    logToConsole(JSON.stringify(validateRes, null, 2), validateRes.success ? 'success' : 'error');
+    logToConsole('=== End Validation API Call ===\n', 'info');
+    
+    if (!validateRes.success || !validateRes.locations || validateRes.locations.length === 0) {
+      status('Invalid Store', 'error');
+      logToConsole(`Invalid Store: ${validateRes.error || 'Store not found'}`, 'error');
+      storeIdInput?.focus();
+      return false;
+    }
+    
+    logToConsole(`Store validated successfully`, 'success');
+  } catch (error) {
+    status('Invalid Store', 'error');
+    logToConsole(`Error validating store: ${error.message}`, 'error');
+    logToConsole(`Error stack: ${error.stack}`, 'error');
+    storeIdInput?.focus();
+    return false;
+  }
+  
+  status('Store validated, loading data...', 'info');
   storeId = storeIdValue;
   
   // Track store ID entered
@@ -1281,6 +1323,52 @@ if (submitChangesBtn) {
     // Re-enable Release Order button after successful submission (check if no errors or if all updates succeeded)
     if (totalErrors === 0) {
       checkPendingChanges(); // This will re-enable the button since quantities match now
+      
+      // Refresh order status by calling search API again if we're on the Suggested Orders page
+      if (suggestedOrdersSection && suggestedOrdersSection.style.display !== 'none') {
+        // Check if we're currently viewing the orders page
+        const isOrdersPageVisible = suggestedOrdersSection.style.display === 'block';
+        
+        if (isOrdersPageVisible && storeId) {
+          status('Refreshing order status...', 'info');
+          logToConsole(`\n=== Refreshing Order Status ===`, 'info');
+          
+          try {
+            const refreshPayload = {
+              org: orgInput?.value.trim() || '',
+              storeId: storeId
+            };
+            
+            logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');
+            logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+            logToConsole(`Request Payload:`, 'info');
+            logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
+            
+            const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
+            
+            logToConsole(`\nRefresh API Response:`, 'info');
+            logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
+            logToConsole('=== End Refresh API Call ===\n', 'info');
+            
+            if (refreshRes.success && refreshRes.orders) {
+              const refreshedOrders = refreshRes.orders || [];
+              logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
+              
+              // Re-render order cards with updated status
+              if (ordersContainer) {
+                renderOrderCards(refreshedOrders);
+                status('Order status updated', 'success');
+              }
+            } else {
+              logToConsole(`Failed to refresh order status: ${refreshRes.error || 'Unknown error'}`, 'error');
+            }
+          } catch (error) {
+            logToConsole(`Error refreshing order status: ${error.message}`, 'error');
+            logToConsole(`Error stack: ${error.stack}`, 'error');
+            // Don't show error to user, just log it
+          }
+        }
+      }
     }
   });
 }

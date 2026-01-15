@@ -139,6 +139,42 @@ export default async function handler(req, res) {
     return res.json({ success: true, token });
   }
 
+  // === SEARCH LOCATION ===
+  if (action === 'search-location') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { storeId } = req.body;
+    if (!storeId) {
+      return res.json({ success: false, error: "Store ID required" });
+    }
+
+    try {
+      const payload = {
+        Query: `LocationId IN ('${storeId}')`
+      };
+
+      const result = await apiCall('POST', '/itemlocation/api/itemlocation/location/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+
+      // Extract locations from response (adjust based on actual API response structure)
+      const locations = result.data || result.items || result || [];
+      
+      // If no locations found, store is invalid
+      if (!locations || locations.length === 0) {
+        return res.json({ success: false, error: "Invalid Store" });
+      }
+      
+      return res.json({ success: true, locations });
+    } catch (error) {
+      await sendHAMessage('location_search_failed', { org: org || 'unknown', store_id: storeId || 'unknown', error: error.message });
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // === GET CONDITION CODES ===
   if (action === 'get-codes') {
     const token = req.headers.authorization?.split(' ')[1];
