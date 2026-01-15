@@ -1420,17 +1420,18 @@ if (releaseOrderBtn) {
       logToConsole(JSON.stringify(approveRes, null, 2), approveRes.success ? 'success' : 'error');
       logToConsole('=== End Release API Call ===\n', 'info');
       
+      // Show completion modal with success or error message
       if (approveRes.success) {
-        status('Order released successfully', 'success');
-        logToConsole('Order released successfully', 'success');
+        showReleaseOrderModal(true, 'Order released successfully');
       } else {
-        status(`Release failed: ${approveRes.error || 'Unknown error'}`, 'error');
-        logToConsole(`Release API failed: ${approveRes.error || 'Unknown error'}`, 'error');
+        const errorMsg = approveRes.error || 'Unknown error';
+        showReleaseOrderModal(false, errorMsg);
       }
     } catch (error) {
-      status(`Release error: ${error.message}`, 'error');
+      const errorMsg = error.message || 'Unknown error';
       logToConsole(`Release API error: ${error.message}`, 'error');
       logToConsole(`Error stack: ${error.stack}`, 'error');
+      showReleaseOrderModal(false, errorMsg);
     }
   });
 }
@@ -1481,6 +1482,89 @@ function showSubmissionModal(updatedCount, errorCount) {
   
   // Show modal using Bootstrap
   const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+// Show Release Order completion modal
+function showReleaseOrderModal(success, message) {
+  const modalEl = document.getElementById('releaseOrderModal');
+  const titleEl = document.getElementById('releaseOrderModalTitle');
+  const messageEl = document.getElementById('releaseOrderModalMessage');
+  const okBtn = document.getElementById('releaseOrderModalOkBtn');
+  
+  if (!modalEl || !messageEl) return;
+  
+  // Set title and message
+  if (titleEl) {
+    titleEl.textContent = success ? 'Release Order - Success' : 'Release Order - Error';
+  }
+  messageEl.textContent = message;
+  
+  // Show modal using Bootstrap
+  const modal = new bootstrap.Modal(modalEl);
+  
+  // Set up OK button handler to navigate back and refresh
+  if (okBtn) {
+    // Remove any existing event listeners by cloning and replacing
+    const newOkBtn = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    
+    newOkBtn.addEventListener('click', async () => {
+      modal.hide();
+      
+      // Navigate back to Suggested Orders screen
+      if (inventoryMovementSection) {
+        inventoryMovementSection.style.display = 'none';
+      }
+      if (suggestedOrdersSection) {
+        suggestedOrdersSection.style.display = 'block';
+      }
+      
+      // Refresh the Suggested Orders by calling the API again
+      if (storeId) {
+        status('Refreshing orders...', 'info');
+        logToConsole(`\n=== Refreshing Orders After Release ===`, 'info');
+        
+        try {
+          const refreshPayload = {
+            org: orgInput?.value.trim() || '',
+            storeId: storeId
+          };
+          
+          logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');
+          logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+          logToConsole(`Request Payload:`, 'info');
+          logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
+          
+          const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
+          
+          logToConsole(`\nRefresh API Response:`, 'info');
+          logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
+          logToConsole('=== End Refresh API Call ===\n', 'info');
+          
+          if (refreshRes.success && refreshRes.orders) {
+            const refreshedOrders = refreshRes.orders || [];
+            logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
+            
+            // Clear and re-render order cards with updated status
+            if (ordersContainer) {
+              ordersContainer.innerHTML = '';
+              renderOrderCards(refreshedOrders);
+              status('Orders refreshed', 'success');
+            }
+          } else {
+            logToConsole(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
+            status(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
+          }
+        } catch (error) {
+          logToConsole(`Error refreshing orders: ${error.message}`, 'error');
+          logToConsole(`Error stack: ${error.stack}`, 'error');
+          status(`Error refreshing orders: ${error.message}`, 'error');
+        }
+      }
+    });
+  }
+  
   modal.show();
 }
 
