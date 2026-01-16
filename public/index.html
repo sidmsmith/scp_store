@@ -619,7 +619,8 @@
       
       /* Position buttons in top-right corner of viewport (screen) on mobile */
       #changeStoreBtnCards,
-      #backToOrdersBtn {
+      #backToOrdersBtn,
+      #backToCardsBtn {
         position: fixed !important;
         top: 1rem !important; /* Moved down a few pixels from top */
         right: 1rem !important; /* Moved left a bit from right edge */
@@ -630,6 +631,20 @@
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
         z-index: 1000; /* Ensure buttons are above other content */
+      }
+      
+      /* Position refresh button in top-left corner of viewport (screen) on mobile */
+      #refreshOrdersBtn {
+        position: fixed !important;
+        top: 1rem !important; /* Same vertical position as Back button */
+        left: 1rem !important; /* Left side of screen */
+        transform: none !important;
+        width: 10% !important;
+        min-width: 60px; /* Ensure button is still usable */
+        max-width: 80px;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        z-index: 1000; /* Ensure button is above other content */
       }
       
       /* Remove top padding from header containers since buttons are fixed */
@@ -1199,11 +1214,11 @@
 
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
-          <button class="btn btn-sm btn-outline-secondary" id="refreshOrdersBtn" type="button" title="Refresh Orders">
+        <div class="mb-2" style="flex-shrink: 0; position: relative; min-height: 2.5rem;">
+          <button class="btn btn-sm btn-outline-secondary" id="refreshOrdersBtn" type="button" title="Refresh Orders" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%);">
             <i class="fas fa-sync-alt"></i>
           </button>
-          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none;">
+          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none; position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
             <i class="fas fa-arrow-left"></i> Back
           </button>
         </div>
