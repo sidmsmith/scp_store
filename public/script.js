@@ -1109,7 +1109,7 @@ function renderOrderCards(orders) {
         logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
         logToConsole(`Backend will send payload:`, 'info');
         const backendPayload = {
-          Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
+          Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`,
           Template: {
             ItemId: null,
             InventoryMovementId: null,
