@@ -2452,7 +2452,7 @@ if (submitChangesBtn) {
         }
       }
       
-      // Refresh order status on Items Page after 1 second
+      // Refresh items page after 1 second (if on Items Page)
       if (inventoryMovementSection && inventoryMovementSection.style.display === 'block') {
         const isItemsPageVisible = inventoryMovementSection.style.display === 'block';
         
@@ -2464,58 +2464,121 @@ if (submitChangesBtn) {
           if (itemsSourceLocationId && itemsLocationId) {
             // Wait 1 second before refreshing
             setTimeout(async () => {
-              logToConsole(`\n=== Refreshing Order Status on Items Page ===`, 'info');
+              logToConsole(`\n=== Refreshing Items Page ===`, 'info');
               
               try {
-                const refreshPayload = {
+                // Refresh the items by calling search-inventory-movement API
+                const refreshItemsPayload = {
                   org: orgInput?.value.trim() || '',
-                  storeId: storeId
+                  sourceLocationId: itemsSourceLocationId,
+                  locationId: itemsLocationId
                 };
                 
-                logToConsole(`Action: search-inventory-movement-summary (refresh for Items Page)`, 'info');
-                logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+                logToConsole(`Action: search-inventory-movement (refresh)`, 'info');
+                logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search`, 'info');
                 logToConsole(`Request Payload:`, 'info');
-                logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
+                logToConsole(JSON.stringify(refreshItemsPayload, null, 2), 'info');
                 
-                const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
+                const refreshItemsRes = await api('search-inventory-movement', refreshItemsPayload);
                 
-                logToConsole(`\nRefresh API Response:`, 'info');
-                logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
-                logToConsole('=== End Refresh API Call ===\n', 'info');
+                logToConsole(`\nRefresh Items API Response:`, 'info');
+                logToConsole(JSON.stringify(refreshItemsRes, null, 2), refreshItemsRes.success ? 'success' : 'error');
+                logToConsole('=== End Refresh Items API Call ===\n', 'info');
                 
-                if (refreshRes.success && refreshRes.orders) {
-                  const refreshedOrders = refreshRes.orders || [];
-                  logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
+                if (refreshItemsRes.success && refreshItemsRes.movements) {
+                  const refreshedMovements = refreshItemsRes.movements || [];
+                  logToConsole(`Refreshed ${refreshedMovements.length} item(s)`, 'success');
                   
-                  // Find the matching order by sourceLocationId and locationId
-                  const matchingOrder = refreshedOrders.find(order => {
-                    const orderSourceLocationId = order.SourceLocationId || '';
-                    const orderLocationId = order.LocationId || '';
-                    return orderSourceLocationId === itemsSourceLocationId && orderLocationId === itemsLocationId;
+                  // Collect all unique item IDs for image lookup
+                  const itemIds = [...new Set(refreshedMovements.map(m => m.ItemId).filter(id => id))];
+                  
+                  // Fetch item images if we have item IDs
+                  let imageMap = {};
+                  if (itemIds.length > 0) {
+                    try {
+                      const imageApiPayload = {
+                        org: orgInput?.value.trim() || '',
+                        itemIds: itemIds
+                      };
+                      
+                      const imageRes = await api('search-item-images', imageApiPayload);
+                      
+                      if (imageRes.success && imageRes.imageMap) {
+                        imageMap = imageRes.imageMap;
+                        logToConsole(`Loaded images for ${Object.keys(imageMap).length} item(s)`, 'success');
+                      }
+                    } catch (error) {
+                      logToConsole(`Error loading item images: ${error.message}`, 'error');
+                    }
+                  }
+                  
+                  // Sort movements by Quantity (Descending) and ItemId (Ascending)
+                  const sortedMovements = [...refreshedMovements].sort((a, b) => {
+                    const qtyA = parseFloat(a.FinalOrderUnits || a.FinalOrderQty || 0);
+                    const qtyB = parseFloat(b.FinalOrderUnits || b.FinalOrderQty || 0);
+                    const itemIdA = a.ItemId || '';
+                    const itemIdB = b.ItemId || '';
+                    
+                    // First sort by Quantity (Descending)
+                    if (qtyB !== qtyA) {
+                      return qtyB - qtyA;
+                    }
+                    
+                    // Then sort by ItemId (Ascending)
+                    return itemIdA.localeCompare(itemIdB);
                   });
                   
-                  if (matchingOrder) {
-                    const newOrderStatus = matchingOrder.OrderStatus?.OrderStatusId || matchingOrder.OrderStatus || '';
-                    logToConsole(`Found matching order with status: ${newOrderStatus}`, 'success');
+                  // Re-render movement cards with updated data
+                  renderMovementCards(sortedMovements, imageMap);
+                  
+                  // Also refresh order status from orders summary
+                  const refreshOrderStatusPayload = {
+                    org: orgInput?.value.trim() || '',
+                    storeId: storeId
+                  };
+                  
+                  logToConsole(`Action: search-inventory-movement-summary (refresh for Items Page)`, 'info');
+                  logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+                  logToConsole(`Request Payload:`, 'info');
+                  logToConsole(JSON.stringify(refreshOrderStatusPayload, null, 2), 'info');
+                  
+                  const refreshOrderStatusRes = await api('search-inventory-movement-summary', refreshOrderStatusPayload);
+                  
+                  logToConsole(`\nRefresh Order Status API Response:`, 'info');
+                  logToConsole(JSON.stringify(refreshOrderStatusRes, null, 2), refreshOrderStatusRes.success ? 'success' : 'error');
+                  logToConsole('=== End Refresh Order Status API Call ===\n', 'info');
+                  
+                  if (refreshOrderStatusRes.success && refreshOrderStatusRes.orders) {
+                    const refreshedOrders = refreshOrderStatusRes.orders || [];
                     
-                    // Update Order Status in header
-                    const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
-                    if (itemsHeaderOrderStatus && newOrderStatus) {
-                      itemsHeaderOrderStatus.textContent = newOrderStatus;
-                    }
+                    // Find the matching order by sourceLocationId and locationId
+                    const matchingOrder = refreshedOrders.find(order => {
+                      const orderSourceLocationId = order.SourceLocationId || '';
+                      const orderLocationId = order.LocationId || '';
+                      return orderSourceLocationId === itemsSourceLocationId && orderLocationId === itemsLocationId;
+                    });
                     
-                    // Update data attribute for future use
-                    if (movementsContainer && newOrderStatus) {
-                      movementsContainer.setAttribute('data-order-status', newOrderStatus);
+                    if (matchingOrder) {
+                      const newOrderStatus = matchingOrder.OrderStatus?.OrderStatusId || matchingOrder.OrderStatus || '';
+                      logToConsole(`Found matching order with status: ${newOrderStatus}`, 'success');
+                      
+                      // Update Order Status in header
+                      const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+                      if (itemsHeaderOrderStatus && newOrderStatus) {
+                        itemsHeaderOrderStatus.textContent = newOrderStatus;
+                      }
+                      
+                      // Update data attribute for future use
+                      if (movementsContainer && newOrderStatus) {
+                        movementsContainer.setAttribute('data-order-status', newOrderStatus);
+                      }
                     }
-                  } else {
-                    logToConsole(`Matching order not found in refreshed orders`, 'warning');
                   }
                 } else {
-                  logToConsole(`Failed to refresh order status: ${refreshRes.error || 'Unknown error'}`, 'error');
+                  logToConsole(`Failed to refresh items: ${refreshItemsRes.error || 'Unknown error'}`, 'error');
                 }
               } catch (error) {
-                logToConsole(`Error refreshing order status on Items Page: ${error.message}`, 'error');
+                logToConsole(`Error refreshing items page: ${error.message}`, 'error');
                 logToConsole(`Error stack: ${error.stack}`, 'error');
                 // Don't show error to user, just log it
               }
