@@ -4,8 +4,8 @@ import fetch from 'node-fetch';
 // Home Assistant Configuration
 const HA_WEBHOOK_URL = process.env.HA_WEBHOOK_URL || "http://sidmsmith.zapto.org:8123/api/webhook/manhattan_app_usage";
 const HA_HEADERS = { "Content-Type": "application/json" };
-const APP_NAME = "SCP Store";
-const APP_VERSION = "1.0.0"; // Match version in index.html title
+const APP_NAME = "Import Forecast";
+const APP_VERSION = "0.2.0"; // Match version in index.html title
 
 // Forecast app uses sales2 environment (different from other apps)
 const AUTH_HOST = process.env.MANHATTAN_AUTH_HOST || "sales2-auth.omni.manh.com";
@@ -139,42 +139,6 @@ export default async function handler(req, res) {
     return res.json({ success: true, token });
   }
 
-  // === SEARCH LOCATION ===
-  if (action === 'search-location') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { storeId } = req.body;
-    if (!storeId) {
-      return res.json({ success: false, error: "Store ID required" });
-    }
-
-    try {
-      const payload = {
-        Query: `LocationId IN ('${storeId}')`
-      };
-
-      const result = await apiCall('POST', '/itemlocation/api/itemlocation/location/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      // Extract locations from response (adjust based on actual API response structure)
-      const locations = result.data || result.items || result || [];
-      
-      // If no locations found, store is invalid
-      if (!locations || locations.length === 0) {
-        return res.json({ success: false, error: "Invalid Store" });
-      }
-      
-      return res.json({ success: true, locations });
-    } catch (error) {
-      await sendHAMessage('location_search_failed', { org: org || 'unknown', store_id: storeId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
   // === GET CONDITION CODES ===
   if (action === 'get-codes') {
     const token = req.headers.authorization?.split(' ')[1];
@@ -246,258 +210,42 @@ export default async function handler(req, res) {
     }
   }
 
-  // === SEARCH INVENTORY MOVEMENT SUMMARY (SUGGESTED ORDERS) ===
-  if (action === 'search-inventory-movement-summary') {
+  // === SEARCH PLANNED PURCHASE ===
+  if (action === 'search-planned-purchase') {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: "No token" });
     
-    const { storeId } = req.body;
-    if (!storeId) {
-      return res.json({ success: false, error: "Store ID required" });
+    const { locationId } = req.body;
+    if (!locationId) {
+      return res.json({ success: false, error: "LocationId is required" });
     }
 
     try {
       const payload = {
-        Query: `LocationId='${storeId}'`,
+        Query: `LocationId IN ('${locationId}')`,
         Template: {
+          PlannedPurchaseId: null,
+          PlannedPurchaseName: null,
           LocationId: null,
-          SourceLocationId: null,
-          SubGroup: null,
-          InventoryMovementSummaryId: null,
-          OrderStatus: {
-            OrderStatusId: null
-          },
-          MovementSummaryFactors: null
-        }
-      };
-
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      // Extract orders from response (adjust based on actual API response structure)
-      const orders = result.data || result.items || result || [];
-      
-      return res.json({ success: true, orders });
-    } catch (error) {
-      await sendHAMessage('suggested_orders_search_failed', { org: org || 'unknown', store_id: req.body.storeId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SEARCH INVENTORY MOVEMENT (ORDER ITEMS) ===
-  if (action === 'search-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { sourceLocationId, locationId } = req.body;
-    if (!sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "SourceLocationId and LocationId required" });
-    }
-
-    try {
-      const payload = {
-        Query: `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}' AND FinalOrderQty>0`,
-        Template: {
           ItemId: null,
-          InventoryMovementId: null,
-          InventoryMovementDetail: {
-            ItemDescription: null
-          },
-          FinalOrderUnits: null,
-          FinalOrderCost: null,
-          OnHandQuantity: null,
-          PeriodForecast: null
+          PurchaseQuantity: null,
+          PlannedReceiptDate: null,
+          PurchaseOnDate: null,
+          DaysOfSupply: null
         }
       };
-
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search', token, org, payload);
+      
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/search', token, org, payload);
       
       if (result.error) {
         return res.json({ success: false, error: result.error });
       }
-
-      // Extract movements from response (adjust based on actual API response structure)
-      const movements = result.data || result.items || result || [];
       
-      return res.json({ success: true, movements });
+      // Extract plannedPurchases from response (adjust based on actual API response structure)
+      const plannedPurchases = result.data || result.plannedPurchases || result || [];
+      
+      return res.json({ success: true, plannedPurchases });
     } catch (error) {
-      await sendHAMessage('inventory_movement_search_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === REVIEW INVENTORY MOVEMENT ===
-  if (action === 'review-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { sourceLocationId, locationId } = req.body;
-    if (!sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "SourceLocationId and LocationId required" });
-    }
-
-    try {
-      const payload = {
-        ItemId: null,
-        SourceLocationId: sourceLocationId,
-        LocationId: locationId,
-        RelationType: "Regular",
-        BracketId: null,
-        executeBracket: false,
-        CancelReview: false,
-        StartReview: true,
-        UseLatest: false
-      };
-
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      return res.json({ success: true, result });
-    } catch (error) {
-      await sendHAMessage('review_inventory_movement_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === CLEAR SUGGESTED ORDER QUANTITY ===
-  if (action === 'clear-soq') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { itemId, sourceLocationId, locationId } = req.body;
-    if (!itemId || !sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "ItemId, SourceLocationId, and LocationId required" });
-    }
-
-    try {
-      const payload = [
-        {
-          ItemId: itemId,
-          LocationId: locationId,
-          SourceLocationId: sourceLocationId
-        }
-      ];
-
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      return res.json({ success: true, result });
-    } catch (error) {
-      await sendHAMessage('clear_soq_failed', { org: org || 'unknown', item_id: itemId || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === APPROVE INVENTORY MOVEMENT (RELEASE ORDER) ===
-  if (action === 'approve-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { sourceLocationId, locationId } = req.body;
-    if (!sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "SourceLocationId and LocationId required" });
-    }
-
-    try {
-      const payload = {
-        LocationId: locationId,
-        SourceLocationId: sourceLocationId,
-        RelationType: "Regular"
-      };
-
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      return res.json({ success: true, result });
-    } catch (error) {
-      await sendHAMessage('approve_inventory_movement_failed', { org: org || 'unknown', source_location_id: sourceLocationId || 'unknown', location_id: locationId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SAVE SUGGESTED ORDER LINE ===
-  if (action === 'save-suggested-order-line') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { inventoryMovementId, finalOrderQty } = req.body;
-    if (!inventoryMovementId || finalOrderQty === undefined || finalOrderQty === null) {
-      return res.json({ success: false, error: "InventoryMovementId and FinalOrderQty required" });
-    }
-
-    try {
-      const payload = {
-        InventoryMovementId: inventoryMovementId,
-        FinalOrderQty: finalOrderQty
-      };
-
-      const result = await apiCall('POST', '/aiui-facade/api/aiui-facade/view/save/com-manh-cp-aiui-facade/SuggestedOrderLine', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      return res.json({ success: true, result });
-    } catch (error) {
-      await sendHAMessage('save_suggested_order_line_failed', { org: org || 'unknown', inventory_movement_id: inventoryMovementId || 'unknown', error: error.message });
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SEARCH ITEM IMAGES ===
-  if (action === 'search-item-images') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { itemIds } = req.body;
-    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
-      return res.json({ success: false, error: "ItemIds array required" });
-    }
-
-    try {
-      // Format item IDs for the IN clause: 'ItemId1','ItemId2',...
-      const itemIdsQuoted = itemIds.map(id => `'${id}'`).join(',');
-      
-      const payload = {
-        Query: `ItemId IN (${itemIdsQuoted})`,
-        Template: {
-          ItemId: null,
-          SmallImageURI: null
-        }
-      };
-
-      const result = await apiCall('POST', '/item/api/item/item/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-
-      // Extract items from response (adjust based on actual API response structure)
-      const items = result.data || result.items || result || [];
-      
-      // Create a map of ItemId to SmallImageURI
-      const imageMap = {};
-      items.forEach(item => {
-        if (item.ItemId && item.SmallImageURI) {
-          imageMap[item.ItemId] = item.SmallImageURI;
-        }
-      });
-      
-      return res.json({ success: true, imageMap });
-    } catch (error) {
-      await sendHAMessage('item_images_search_failed', { org: org || 'unknown', item_count: itemIds.length || 0, error: error.message });
       return res.json({ success: false, error: error.message });
     }
   }
