@@ -449,18 +449,15 @@ export default async function handler(req, res) {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: "No token" });
     
-    const { itemId, inventoryMovementId, quantity, sourceLocationId, locationId } = req.body;
-    if (!itemId || !inventoryMovementId || quantity === undefined || !sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "itemId, inventoryMovementId, quantity, sourceLocationId, and locationId are required" });
+    const { inventoryMovementId, finalOrderQty } = req.body;
+    if (!inventoryMovementId || finalOrderQty === undefined) {
+      return res.json({ success: false, error: "inventoryMovementId and finalOrderQty are required" });
     }
 
     try {
       const payload = {
-        ItemId: itemId,
         InventoryMovementId: inventoryMovementId,
-        FinalOrderUnits: quantity,
-        SourceLocationId: sourceLocationId,
-        LocationId: locationId
+        FinalOrderUnits: finalOrderQty
       };
       
       const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/save', token, org, payload);
