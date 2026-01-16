@@ -242,8 +242,8 @@ async function submitStoreId() {
     status('Store ID required', 'error');
     return false;
   }
-
-  status('Validating store...', 'info');
+  
+  // Removed: status('Validating store...', 'info');
   
   // Validate store by calling location search API
   try {
@@ -674,7 +674,7 @@ if (suggestedOrdersCard) {
       }
       
       if (orders.length === 0) {
-        status('No suggested orders found', 'info');
+        // Removed: status('No suggested orders found', 'info');
         if (ordersEmpty) {
           ordersEmpty.style.display = 'block';
         }
@@ -1588,7 +1588,7 @@ if (submitChangesBtn) {
               // Re-render order cards with updated status
               if (ordersContainer) {
                 renderOrderCards(refreshedOrders);
-                status('Order status updated', 'success');
+                // Removed: status('Order status updated', 'success');
               }
             } else {
               logToConsole(`Failed to refresh order status: ${refreshRes.error || 'Unknown error'}`, 'error');
@@ -1781,7 +1781,7 @@ function showReleaseOrderModal(success, message) {
             if (ordersContainer) {
               ordersContainer.innerHTML = '';
               renderOrderCards(refreshedOrders);
-              status('Orders refreshed', 'success');
+              // Removed: status('Orders refreshed', 'success');
             }
           } else {
             logToConsole(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
