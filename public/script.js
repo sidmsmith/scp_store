@@ -592,9 +592,7 @@ if (suggestedOrdersCard) {
     }
     
     // Clear header values initially
-    const headerStoreId = document.getElementById('headerStoreId');
     const headerDepartment = document.getElementById('headerDepartment');
-    if (headerStoreId) headerStoreId.textContent = '';
     if (headerDepartment) headerDepartment.textContent = '';
     
     if (ordersLoading) {
