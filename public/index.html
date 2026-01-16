@@ -607,16 +607,37 @@
       }
     }
     
-    /* Mobile: Left-justify Department and Status text to avoid button overlap */
+    /* Mobile: Move buttons to top-right corner with 10% width */
     @media (max-width: 767px) {
       .department-header-row {
-        text-align: left !important;
-        padding-right: 140px; /* Add padding to prevent text from going under button */
+        padding-right: 0; /* Remove padding since button is in corner */
       }
       
       .status-header-row {
-        text-align: left !important;
-        padding-right: 100px; /* Add padding to prevent text from going under button */
+        padding-right: 0; /* Remove padding since button is in corner */
+      }
+      
+      /* Position buttons in top-right corner on mobile */
+      #changeStoreBtnCards,
+      #backToOrdersBtn {
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+        width: 10% !important;
+        min-width: 60px; /* Ensure button is still usable */
+        max-width: 80px;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+      
+      /* Add top padding to header containers to make room for buttons */
+      .store-header-cards {
+        padding-top: 2.5rem; /* Make room for button in corner */
+      }
+      
+      #itemsHeaderContainer {
+        padding-top: 2.5rem; /* Make room for button in corner */
       }
     }
     
