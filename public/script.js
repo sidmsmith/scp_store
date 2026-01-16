@@ -179,7 +179,7 @@ async function authenticate() {
     return false;
   }
 
-  status('Authenticating...');
+  // Removed: status('Authenticating...');
   const res = await api('auth', { org });
   if (!res.success) {
     status(res.error || 'Auth failed', 'error');
@@ -208,7 +208,7 @@ async function authenticate() {
   }
 
   token = res.token;
-  status(`Authenticated as ${org}`, 'success');
+  // Removed: status(`Authenticated as ${org}`, 'success');
   await trackEvent('auth_success', { org: org || 'unknown' });
   
   // Hide auth section on successful authentication
@@ -682,7 +682,7 @@ if (suggestedOrdersCard) {
         return;
       }
       
-      status(`Found ${orders.length} suggested order(s)`, 'success');
+      // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
       logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
       
       // Update header with Store and Department
@@ -717,7 +717,7 @@ if (suggestedOrdersCard) {
 
 if (opportunityBuysCard) {
   opportunityBuysCard.addEventListener('click', async () => {
-    status('Opening Opportunity Buys...', 'info');
+    // Removed: status('Opening Opportunity Buys...', 'info');
     await trackEvent('card_clicked', { 
       org: orgInput?.value.trim() || 'unknown',
       store_id: storeId || 'unknown',
@@ -767,7 +767,7 @@ if (backToStoreBtn) {
       storeIdInput.value = '';
     }
     
-    status('Enter a new Store ID', 'info');
+    // Removed: status('Enter a new Store ID', 'info');
   });
 }
 
@@ -799,7 +799,7 @@ if (backToCardsBtn) {
         cardsHeaderStoreId.textContent = storeId;
       }
     
-    status('', 'info');
+    // Removed: status('', 'info'); // Clear status messages
   });
 }
 
@@ -819,7 +819,7 @@ if (backToOrdersBtn) {
       mainTitle.style.display = 'none';
     }
     
-    status('', 'info');
+    // Removed: status('', 'info'); // Clear status messages
   });
 }
 
@@ -1329,7 +1329,7 @@ if (submitChangesBtn) {
     });
     
     if (updates.length === 0) {
-      status('No changes to submit', 'info');
+      // Removed: status('No changes to submit', 'info');
       logToConsole('No quantity changes detected', 'info');
       return;
     }
@@ -1348,7 +1348,7 @@ if (submitChangesBtn) {
     // Only call review API if order status is "Suggested"
     let reviewSuccess = true; // Default to true if review is not needed
     if (orderStatus === 'Suggested') {
-      status('Starting review...', 'info');
+      // Removed: status('Starting review...', 'info');
       logToConsole(`\n=== Review Inventory Movement ===`, 'info');
       logToConsole(`Action: review-inventory-movement`, 'info');
       logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review`, 'info');
