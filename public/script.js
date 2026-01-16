@@ -724,6 +724,11 @@ if (suggestedOrdersCard) {
       suggestedOrdersSection.style.display = 'block';
     }
     
+    // Show back to cards button when viewing Suggested Orders
+    if (backToCardsBtn) {
+      backToCardsBtn.style.display = 'block';
+    }
+    
     // Hide main title and show store header
     const mainTitle = document.getElementById('mainTitle');
     if (mainTitle) {
@@ -816,6 +821,16 @@ if (backToCardsBtn) {
     }
     if (inventoryMovementSection) {
       inventoryMovementSection.style.display = 'none';
+    }
+    
+    // Hide back to cards button when leaving Suggested Orders
+    if (backToCardsBtn) {
+      backToCardsBtn.style.display = 'none';
+    }
+    
+    // Hide Store ID section (ensure we're showing Main Cards page, not Store prompt)
+    if (storeIdSection) {
+      storeIdSection.style.display = 'none';
     }
     
     // Clear status messages when navigating
