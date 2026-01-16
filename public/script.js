@@ -737,43 +737,42 @@ if (opportunityBuysCard) {
 const changeStoreBtnCards = document.getElementById('changeStoreBtnCards');
 
 function handleChangeStore() {
-    // Hide suggested orders section
-    if (suggestedOrdersSection) {
-      suggestedOrdersSection.style.display = 'none';
-    }
-    if (inventoryMovementSection) {
-      inventoryMovementSection.style.display = 'none';
-    }
-    
-    // Hide store header cards, show main title
-    const mainTitle = document.getElementById('mainTitle');
-    if (mainTitle) {
-      mainTitle.style.display = 'block';
-    }
-    const storeHeaderCards = document.getElementById('storeHeaderCards');
-    if (storeHeaderCards) {
-      storeHeaderCards.style.display = 'none';
-    }
-    
-    // Show Store ID input section to allow changing store
-    if (storeIdSection) {
-      storeIdSection.style.display = 'block';
-      storeIdInput?.focus();
-    }
-    
-    // Hide cards section
-    if (cardsSection) {
-      cardsSection.style.display = 'none';
-    }
-    
-    // Clear store ID to allow re-entry
-    storeId = null;
-    if (storeIdInput) {
-      storeIdInput.value = '';
-    }
-    
-    // Removed: status('Enter a new Store ID', 'info');
-  });
+  // Hide suggested orders section
+  if (suggestedOrdersSection) {
+    suggestedOrdersSection.style.display = 'none';
+  }
+  if (inventoryMovementSection) {
+    inventoryMovementSection.style.display = 'none';
+  }
+  
+  // Hide store header cards, show main title
+  const mainTitle = document.getElementById('mainTitle');
+  if (mainTitle) {
+    mainTitle.style.display = 'block';
+  }
+  const storeHeaderCards = document.getElementById('storeHeaderCards');
+  if (storeHeaderCards) {
+    storeHeaderCards.style.display = 'none';
+  }
+  
+  // Show Store ID input section to allow changing store
+  if (storeIdSection) {
+    storeIdSection.style.display = 'block';
+    storeIdInput?.focus();
+  }
+  
+  // Hide cards section
+  if (cardsSection) {
+    cardsSection.style.display = 'none';
+  }
+  
+  // Clear store ID to allow re-entry
+  storeId = null;
+  if (storeIdInput) {
+    storeIdInput.value = '';
+  }
+  
+  // Removed: status('Enter a new Store ID', 'info');
 }
 
 // Attach change store handler to button on Main Cards page
@@ -843,6 +842,11 @@ if (backToOrdersBtn) {
     const storeHeaderCards = document.getElementById('storeHeaderCards');
     if (storeHeaderCards && storeId) {
       storeHeaderCards.style.display = 'block';
+    }
+    
+    // Show Change Store button when returning to Suggested Orders page
+    if (changeStoreBtnCards) {
+      changeStoreBtnCards.style.display = 'block';
     }
     
     // Removed: status('', 'info'); // Clear status messages
@@ -986,6 +990,10 @@ function renderOrderCards(orders) {
       }
       
       // Keep storeHeaderCards visible on Items page (shows Store and Department)
+      // Hide Change Store button on Items page
+      if (changeStoreBtnCards) {
+        changeStoreBtnCards.style.display = 'none';
+      }
       
       // Keep main title hidden when showing items
       const mainTitle = document.getElementById('mainTitle');
