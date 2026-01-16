@@ -1082,13 +1082,13 @@
       <h2 id="mainTitle" class="text-center mb-4">SCP Store v1.0.0</h2>
       
       <!-- Store Header for Cards Page -->
-      <div id="storeHeaderCards" class="store-header-cards mb-2" style="display:none;">
+      <div id="storeHeaderCards" class="store-header-cards mb-2" style="display:none; position: relative;">
         <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 0.25rem;">
           <span>Store: <span id="cardsHeaderStoreId"></span></span>
         </div>
-        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; position: relative;">
           <span>Department: <span id="cardsHeaderDepartment"></span></span>
-          <button class="btn btn-sm btn-outline-secondary" id="changeStoreBtnCards" type="button" style="flex-shrink: 0;">
+          <button class="btn btn-sm btn-outline-secondary" id="changeStoreBtnCards" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
             <i class="fas fa-arrow-left"></i> Change Store
           </button>
         </div>
@@ -1158,10 +1158,10 @@
       <!-- Inventory Movement Items Section -->
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
         <!-- Header with Order Status - displayed via itemsHeaderContainer -->
-        <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center;">
-          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); display: flex; justify-content: center; align-items: center; gap: 1rem;">
+        <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center; position: relative;">
+          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); position: relative;">
             <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
-            <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="flex-shrink: 0;">
+            <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
               <i class="fas fa-arrow-left"></i> Back
             </button>
           </div>
