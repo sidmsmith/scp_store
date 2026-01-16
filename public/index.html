@@ -607,7 +607,7 @@
       }
     }
     
-    /* Mobile: Move buttons to top-right corner with 10% width */
+    /* Mobile: Move buttons to top-right corner of screen (viewport) with 10% width */
     @media (max-width: 767px) {
       .department-header-row {
         padding-right: 0; /* Remove padding since button is in corner */
@@ -617,27 +617,28 @@
         padding-right: 0; /* Remove padding since button is in corner */
       }
       
-      /* Position buttons in top-right corner on mobile */
+      /* Position buttons in top-right corner of viewport (screen) on mobile */
       #changeStoreBtnCards,
       #backToOrdersBtn {
-        position: absolute !important;
-        top: 0 !important;
-        right: 0 !important;
+        position: fixed !important;
+        top: 0.5rem !important; /* Small offset from top */
+        right: 0.5rem !important; /* Small offset from right edge */
         transform: none !important;
         width: 10% !important;
         min-width: 60px; /* Ensure button is still usable */
         max-width: 80px;
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
+        z-index: 1000; /* Ensure buttons are above other content */
       }
       
-      /* Add top padding to header containers to make room for buttons */
+      /* Remove top padding from header containers since buttons are fixed */
       .store-header-cards {
-        padding-top: 2.5rem; /* Make room for button in corner */
+        padding-top: 0;
       }
       
       #itemsHeaderContainer {
-        padding-top: 2.5rem; /* Make room for button in corner */
+        padding-top: 0;
       }
     }
     
