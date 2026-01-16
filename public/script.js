@@ -472,15 +472,9 @@ function startBarcodeScanner() {
     },
     decoder: {
       readers: [
-        "code_128_reader",  // Primary format for Store IDs
-        "code_39_reader",
-        "code_39_vin_reader",
-        "ean_reader",
-        "ean_8_reader",
-        "codabar_reader",
-        "upc_reader",
-        "upc_e_reader",
-        "i2of5_reader"
+        "code_128_reader",  // Primary format for Store IDs (most reliable)
+        "code_39_reader"    // Secondary format (also reliable)
+        // Removed other readers to reduce false positives and improve consistency
       ],
       debug: {
         drawBoundingBox: true,
@@ -518,10 +512,31 @@ function startBarcodeScanner() {
       }
       
       const format = (result.codeResult && result.codeResult.format) || 'unknown';
+      
+      // Only accept code_128 and code_39 formats (more reliable)
+      if (format !== 'code_128' && format !== 'code_39') {
+        logToConsole(`Ignored non-standard format: ${format}`, 'warning');
+        return;
+      }
+      
+      // Calculate confidence from decoded codes
+      let confidence = 0;
+      if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
+        const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
+        confidence = validCodes / result.codeResult.decodedCodes.length;
+      }
+      
+      // Only accept high-confidence scans (70%+ for code_128, 60%+ for code_39)
+      const minConfidence = format === 'code_128' ? 0.7 : 0.6;
+      if (confidence < minConfidence) {
+        logToConsole(`Low confidence scan ignored: ${code} (${format}, ${(confidence * 100).toFixed(1)}%)`, 'warning');
+        return;
+      }
+      
       const now = Date.now();
       
       // Debounce to prevent rapid duplicate scans
-      if (now - lastScanTime < 200) {
+      if (now - lastScanTime < 300) {
         return;
       }
       
@@ -535,7 +550,7 @@ function startBarcodeScanner() {
       
       lastScanTime = now;
       
-      logToConsole(`Barcode detected: ${code} (format: ${format}, count: ${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
+      logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%, count: ${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
       
       // Only accept if we've seen the same code multiple times consistently
       if (scanCount < MIN_CONSISTENT_SCANS) {
