@@ -1510,12 +1510,8 @@ async function loadOpportunityBuys() {
     
     const itemIds = [itemId];
     const combinedItems = [];
-      const itemId = plannedPurchase.ItemId;
-      if (!itemId) continue;
-      
-      itemIds.push(itemId);
-      
-      // Call inventoryMovement/search for this item
+    
+    // Call inventoryMovement/search for this item
       const inventoryMovementPayload = {
         org: orgInput?.value.trim() || '',
         itemId: itemId,
@@ -1843,7 +1839,7 @@ function renderMovementCards(movements, imageMap = {}) {
         <div class="item-card-center">
           <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
           <div class="item-card-details">
-            ${finalOrderUnits !== '' && initialQuantity > 0 ? `<div class="item-detail-line">Order Qty: ${formatNumber(finalOrderUnits)}</div>` : ''}
+            ${finalOrderUnits !== '' ? `<div class="item-detail-line">Order Qty: ${formatNumber(finalOrderUnits)}</div>` : ''}
             ${finalOrderCost !== null ? `<div class="item-detail-line">Price: ${formatCurrency(finalOrderCost)}</div>` : ''}
             ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
             ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
