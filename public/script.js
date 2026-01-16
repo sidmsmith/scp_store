@@ -221,8 +221,8 @@ async function authenticate() {
     storeIdInput?.focus();
   }
   
-  // Show console toggle button after authentication (console stays hidden by default)
-  if (consoleToggleContainer) {
+  // Show console toggle button after authentication (unless Console=N)
+  if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
     consoleToggleContainer.style.display = 'block';
   }
   return true;
@@ -416,11 +416,11 @@ if (suggestedOrdersCard) {
       logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
       logToConsole('=== End API Call ===\n', 'info');
       
-      // Show console section when API is called
-      if (consoleSection) {
+      // Show console section when API is called (unless Console=N)
+      if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
         consoleSection.style.display = 'block';
       }
-      if (consoleToggleContainer) {
+      if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
         consoleToggleContainer.style.display = 'block';
       }
       
