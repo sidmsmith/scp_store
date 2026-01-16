@@ -455,76 +455,6 @@ function startBarcodeScanner() {
   // Clear any existing content
   interactiveElement.innerHTML = '';
   
-  // Create detection handler function
-  detectionHandler = function(result) {
-    if (!scannerRunning) return;
-    
-    const code = result.codeResult.code;
-    if (!code || code.length === 0) return;
-    
-    const format = result.codeResult.format || '';
-    const now = Date.now();
-    
-    // Simple debounce to prevent rapid duplicate scans
-    if (now - lastScanTime < 200) {
-      return;
-    }
-    
-    // Calculate confidence from decoded codes
-    let confidence = 0;
-    if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
-      const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
-      confidence = validCodes / result.codeResult.decodedCodes.length;
-    }
-    
-    logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%)`, 'info');
-    
-    // Accept if code exists and confidence is reasonable (very low threshold to accept scans)
-    const minConfidence = (format === 'code_128' || format === 'code_39') ? 0.15 : 0.25;
-    
-    if (confidence < minConfidence) {
-      logToConsole(`Low confidence scan, ignoring: ${code} (${(confidence * 100).toFixed(1)}%)`, 'warning');
-      return;
-    }
-    
-    lastScanTime = now;
-    logToConsole(`Accepting barcode scan: ${code}`, 'success');
-    
-    // Stop scanner
-    try {
-      Quagga.stop();
-      Quagga.offDetected(detectionHandler);
-      detectionHandler = null;
-      scannerRunning = false;
-    } catch (error) {
-      console.error('Error stopping scanner:', error);
-    }
-    
-    // Fill Store ID input
-    if (storeIdInput) {
-      storeIdInput.value = code;
-      storeIdInput.focus();
-    }
-    
-    // Update status
-    const scannerStatus = document.getElementById('scannerStatus');
-    if (scannerStatus) {
-      scannerStatus.textContent = `Scanned: ${code}`;
-      scannerStatus.style.color = 'green';
-    }
-    
-    // Close modal after a brief delay
-    setTimeout(() => {
-      const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
-      if (scannerModal) {
-        scannerModal.hide();
-      }
-    }, 500);
-  };
-  
-  // Set up detection handler BEFORE init (critical!)
-  Quagga.onDetected(detectionHandler);
-  
   // Initialize QuaggaJS with standard configuration
   Quagga.init({
     inputStream: {
@@ -570,16 +500,83 @@ function startBarcodeScanner() {
         scannerStatus.style.color = 'red';
       }
       logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
+      console.error('QuaggaJS init error:', err);
       scannerRunning = false;
-      // Clean up handler on error
-      if (detectionHandler) {
-        try {
-          Quagga.offDetected(detectionHandler);
-        } catch (e) {}
-        detectionHandler = null;
-      }
       return;
     }
+    
+    // CRITICAL: Set up detection handler INSIDE init callback, after init succeeds
+    detectionHandler = function(result) {
+      if (!scannerRunning) return;
+      
+      const code = result.codeResult ? result.codeResult.code : null;
+      if (!code || code.length === 0) {
+        logToConsole('Empty code detected, ignoring', 'warning');
+        return;
+      }
+      
+      const format = (result.codeResult && result.codeResult.format) || 'unknown';
+      const now = Date.now();
+      
+      // Simple debounce to prevent rapid duplicate scans
+      if (now - lastScanTime < 300) {
+        logToConsole(`Debounce: ignoring duplicate scan: ${code}`, 'info');
+        return;
+      }
+      
+      // Log all detection attempts for debugging
+      let confidence = 0;
+      if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
+        const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
+        confidence = validCodes / result.codeResult.decodedCodes.length;
+      }
+      
+      logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%)`, 'info');
+      console.log('Barcode detection result:', {
+        code: code,
+        format: format,
+        confidence: confidence,
+        result: result
+      });
+      
+      // Accept ANY valid code for now (no confidence filtering) to test if detection works
+      lastScanTime = now;
+      logToConsole(`Accepting barcode scan: ${code}`, 'success');
+      
+      // Stop scanner
+      try {
+        Quagga.stop();
+        Quagga.offDetected(detectionHandler);
+        detectionHandler = null;
+        scannerRunning = false;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+      
+      // Fill Store ID input
+      if (storeIdInput) {
+        storeIdInput.value = code;
+        storeIdInput.focus();
+      }
+      
+      // Update status
+      const scannerStatus = document.getElementById('scannerStatus');
+      if (scannerStatus) {
+        scannerStatus.textContent = `Scanned: ${code}`;
+        scannerStatus.style.color = 'green';
+      }
+      
+      // Close modal after a brief delay
+      setTimeout(() => {
+        const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
+        if (scannerModal) {
+          scannerModal.hide();
+        }
+      }, 500);
+    };
+    
+    // Register detection handler AFTER init succeeds, BEFORE start
+    Quagga.onDetected(detectionHandler);
     
     scannerRunning = true;
     
@@ -588,8 +585,10 @@ function startBarcodeScanner() {
       scannerStatus.style.color = 'var(--text)';
     }
     
+    // Start scanning
     Quagga.start();
-    logToConsole('Barcode scanner started', 'info');
+    logToConsole('Barcode scanner started and ready', 'info');
+    console.log('QuaggaJS started successfully');
   });
 }
 
