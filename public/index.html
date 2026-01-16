@@ -79,13 +79,26 @@
       --pre-text: #333333;
     }
     
+    html {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent page-level scrolling */
+    }
+    
     body {
+      height: 100vh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent page-level scrolling */
       background: var(--bg-dark);
       color: var(--text);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 0.5rem;
-      margin: 0;
-      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: fixed; /* Prevent any scrolling */
     }
     
     /* Mobile-first container */
@@ -110,6 +123,12 @@
       margin: 0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0; /* Critical for flexbox scrolling */
+      overflow: hidden;
+      flex: 1;
     }
     
     /* Light theme: White cards with enhanced shadows */
@@ -202,7 +221,37 @@
       border-color: #218838 !important;
     }
     
-    .status { min-height: 1.5em; font-weight: 500; }
+    .status { 
+      min-height: 1.5em; 
+      font-weight: 500; 
+      flex-shrink: 0; /* Keep status at bottom, don't scroll */
+      margin-top: auto; /* Push to bottom */
+      padding-top: 0.5rem;
+    }
+    
+    /* Sections that should not scroll - prevent shrinking */
+    #logoContainer,
+    #mainTitle,
+    #storeHeaderCards,
+    #authSection,
+    .store-id-section,
+    #storeHeader,
+    #itemsHeader,
+    .submit-button-container,
+    #consoleToggleContainer,
+    #consoleSection,
+    .d-flex.mb-3,
+    .d-flex.mb-2 {
+      flex-shrink: 0; /* Prevent these from shrinking */
+    }
+    
+    /* Ensure loading/empty states don't interfere with scrolling */
+    #ordersLoading,
+    #ordersEmpty,
+    #movementsLoading,
+    #movementsEmpty {
+      flex-shrink: 0;
+    }
     .workspace {
       background: var(--workspace-bg);
       border: 2px dashed var(--workspace-border);
