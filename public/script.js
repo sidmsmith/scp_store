@@ -1018,10 +1018,10 @@ async function loadOpportunityBuysCards() {
     refreshOrdersBtn.style.display = 'none';
   }
   
-  // Hide storeHeaderCards (Store and Department) for Opportunity Buys
+  // Show storeHeaderCards (Store and Department) for Opportunity Buys
   const storeHeaderCards = document.getElementById('storeHeaderCards');
-  if (storeHeaderCards) {
-    storeHeaderCards.style.display = 'none';
+  if (storeHeaderCards && storeId) {
+    storeHeaderCards.style.display = 'block';
   }
   
   // Hide Change Store button on Opportunity Buys page
@@ -1035,10 +1035,23 @@ async function loadOpportunityBuysCards() {
     mainTitle.style.display = 'none';
   }
   
-  // Hide itemsHeaderContainer (Source and Order Status) for Opportunity Buys
+  // Show itemsHeaderContainer for Opportunity Buys but hide Source and Order Status (only show Back button)
   const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+  const itemsHeaderSource = document.getElementById('itemsHeaderSource');
+  const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+  
   if (itemsHeaderContainer) {
-    itemsHeaderContainer.style.display = 'none';
+    itemsHeaderContainer.style.display = 'block';
+  }
+  
+  // Hide Source and Order Status fields for Opportunity Buys (keep Back button visible)
+  if (itemsHeaderSource) {
+    itemsHeaderSource.textContent = '';
+    itemsHeaderSource.parentElement.style.display = 'none'; // Hide the Source div
+  }
+  if (itemsHeaderOrderStatus) {
+    itemsHeaderOrderStatus.textContent = '';
+    itemsHeaderOrderStatus.parentElement.style.display = 'none'; // Hide the Order Status div
   }
   
   if (movementsLoading) {
@@ -2127,6 +2140,15 @@ if (submitChangesBtn) {
       
       // Show completion modal
       showSubmissionModal(totalSuccess, totalErrors);
+      
+      // If update was successful (no errors), wait 1 second and refresh Opportunity Buys items
+      if (totalErrors === 0 && totalSuccess > 0) {
+        setTimeout(async () => {
+          logToConsole(`\n=== Refreshing Opportunity Buys Items ===`, 'info');
+          await loadOpportunityBuysCards();
+        }, 1000);
+      }
+      
       return;
     }
     
