@@ -981,7 +981,7 @@ function formatNumber(value) {
   return parseFloat(value).toFixed(0);
 }
 
-// Load Opportunity Buys cards (summary page)
+// Load Opportunity Buys items (directly show items like Suggested Orders Items page)
 async function loadOpportunityBuysCards() {
   if (!token) {
     status('Please authenticate first', 'error');
@@ -993,42 +993,78 @@ async function loadOpportunityBuysCards() {
     return;
   }
   
-  // Hide cards section, show orders section (reuse same section)
+  // Hide cards section, hide orders section, show movements section (like Suggested Orders Items page)
   if (cardsSection) {
     cardsSection.style.display = 'none';
   }
   if (suggestedOrdersSection) {
-    suggestedOrdersSection.style.display = 'block';
+    suggestedOrdersSection.style.display = 'none';
+  }
+  if (inventoryMovementSection) {
+    inventoryMovementSection.style.display = 'block';
   }
   
-  // Hide refresh button (not applicable for Opportunity Buys yet)
+  // Hide refresh button when leaving Opportunity Buys section
   const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
   if (refreshOrdersBtn) {
     refreshOrdersBtn.style.display = 'none';
   }
   
-  // Hide main title and show store header
+  // Keep storeHeaderCards visible (shows Store and Department)
+  // Hide Change Store button on Opportunity Buys page
+  if (changeStoreBtnCards) {
+    changeStoreBtnCards.style.display = 'none';
+  }
+  
+  // Keep main title hidden when showing items
   const mainTitle = document.getElementById('mainTitle');
   if (mainTitle) {
     mainTitle.style.display = 'none';
   }
   
-  // Clear header values initially
-  const headerDepartment = document.getElementById('headerDepartment');
-  if (headerDepartment) headerDepartment.textContent = '';
+  // Show header with Back button (clear Source and Order Status - not applicable for Opportunity Buys)
+  const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+  const itemsHeaderSource = document.getElementById('itemsHeaderSource');
+  const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
   
-  if (ordersLoading) {
-    ordersLoading.style.display = 'block';
+  if (itemsHeaderContainer) {
+    itemsHeaderContainer.style.display = 'block';
   }
-  if (ordersEmpty) {
-    ordersEmpty.style.display = 'none';
+  
+  // Clear Source and Order Status for Opportunity Buys
+  if (itemsHeaderSource) {
+    itemsHeaderSource.textContent = '';
   }
-  if (ordersContainer) {
-    ordersContainer.innerHTML = '';
+  if (itemsHeaderOrderStatus) {
+    itemsHeaderOrderStatus.textContent = '';
+  }
+  
+  if (movementsLoading) {
+    movementsLoading.style.display = 'block';
+  }
+  if (movementsEmpty) {
+    movementsEmpty.style.display = 'none';
+  }
+  if (movementsContainer) {
+    movementsContainer.innerHTML = '';
+  }
+  
+  // Show Update button (Opportunity Buys only has Update button, not Release Order)
+  if (submitChangesBtn) {
+    submitChangesBtn.style.display = 'none'; // Will show after items load
+  }
+  if (releaseOrderBtn) {
+    releaseOrderBtn.style.display = 'none'; // Not applicable for Opportunity Buys
+  }
+  
+  // Mark this as Opportunity Buys in the container
+  if (movementsContainer) {
+    movementsContainer.setAttribute('data-is-opportunity-buys', 'true');
+    movementsContainer.setAttribute('data-location-id', storeId);
   }
   
   try {
-    // Call plannedPurchase/search API
+    // Step 1: Call plannedPurchase/search API
     const plannedPurchasePayload = {
       org: orgInput?.value.trim() || '',
       locationId: storeId
@@ -1039,6 +1075,21 @@ async function loadOpportunityBuysCards() {
     logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/search`, 'info');
     logToConsole(`Request Payload:`, 'info');
     logToConsole(JSON.stringify(plannedPurchasePayload, null, 2), 'info');
+    logToConsole(`Backend will send payload:`, 'info');
+    const backendPlannedPurchasePayload = {
+      Query: `LocationId IN ('${storeId}')`,
+      Template: {
+        PlannedPurchaseId: null,
+        PlannedPurchaseName: null,
+        LocationId: null,
+        ItemId: null,
+        PurchaseQuantity: null,
+        PlannedReceiptDate: null,
+        PurchaseOnDate: null,
+        DaysOfSupply: null
+      }
+    };
+    logToConsole(JSON.stringify(backendPlannedPurchasePayload, null, 2), 'info');
     
     const plannedPurchaseRes = await api('search-planned-purchase', plannedPurchasePayload);
     
@@ -1054,15 +1105,15 @@ async function loadOpportunityBuysCards() {
       consoleToggleContainer.style.display = 'block';
     }
     
-    if (ordersLoading) {
-      ordersLoading.style.display = 'none';
+    if (movementsLoading) {
+      movementsLoading.style.display = 'none';
     }
     
     if (!plannedPurchaseRes.success) {
       status(plannedPurchaseRes.error || 'Failed to load opportunity buys', 'error');
       logToConsole(`Error loading planned purchases: ${plannedPurchaseRes.error || 'Unknown error'}`, 'error');
-      if (ordersEmpty) {
-        ordersEmpty.style.display = 'block';
+      if (movementsEmpty) {
+        movementsEmpty.style.display = 'block';
       }
       return;
     }
@@ -1077,8 +1128,8 @@ async function loadOpportunityBuysCards() {
     
     if (plannedPurchases.length === 0) {
       status('No opportunity buys found', 'info');
-      if (ordersEmpty) {
-        ordersEmpty.style.display = 'block';
+      if (movementsEmpty) {
+        movementsEmpty.style.display = 'block';
       }
       logToConsole('No planned purchases found', 'info');
       return;
@@ -1087,6 +1138,165 @@ async function loadOpportunityBuysCards() {
     status(`Found ${plannedPurchases.length} opportunity buy(s)`, 'success');
     logToConsole(`Loaded ${plannedPurchases.length} planned purchase(s)`, 'success');
     
+    // Step 2: For each PlannedPurchase item, call inventoryMovement/search to get OnHand and Forecast
+    const combinedItems = [];
+    const itemIds = [];
+    
+    for (const plannedPurchase of plannedPurchases) {
+      const itemId = plannedPurchase.ItemId;
+      if (!itemId) continue;
+      
+      itemIds.push(itemId);
+      
+      // Call inventoryMovement/search for this item
+      const inventoryMovementPayload = {
+        org: orgInput?.value.trim() || '',
+        itemId: itemId,
+        locationId: storeId
+      };
+      
+      logToConsole(`\n=== Inventory Movement API Call (for ItemId: ${itemId}) ===`, 'info');
+      logToConsole(`Action: search-inventory-movement`, 'info');
+      logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search`, 'info');
+      logToConsole(`Request Payload:`, 'info');
+      logToConsole(JSON.stringify(inventoryMovementPayload, null, 2), 'info');
+      logToConsole(`Backend will send payload:`, 'info');
+      const backendInventoryMovementPayload = {
+        Query: `ItemId='${itemId}' AND LocationId='${storeId}'`,
+        Template: {
+          ItemId: null,
+          InventoryMovementId: null,
+          InventoryMovementDetail: {
+            ItemDescription: null
+          },
+          FinalOrderUnits: null,
+          FinalOrderCost: null,
+          OnHandQuantity: null,
+          PeriodForecast: null
+        }
+      };
+      logToConsole(JSON.stringify(backendInventoryMovementPayload, null, 2), 'info');
+      
+      try {
+        const inventoryMovementRes = await api('search-inventory-movement', inventoryMovementPayload);
+        
+        logToConsole(`\nInventory Movement API Response (for ItemId: ${itemId}):`, 'info');
+        logToConsole(JSON.stringify(inventoryMovementRes, null, 2), inventoryMovementRes.success ? 'success' : 'error');
+        logToConsole('=== End Inventory Movement API Call ===\n', 'info');
+        
+        // Get the first movement result (should be only one per item)
+        const inventoryMovement = inventoryMovementRes.movements && inventoryMovementRes.movements.length > 0 
+          ? inventoryMovementRes.movements[0] 
+          : null;
+        
+        // Combine PlannedPurchase and inventoryMovement data into format expected by renderOpportunityBuysCards
+        const combinedItem = {
+          ItemId: itemId,
+          InventoryMovementDetail: {
+            ItemDescription: inventoryMovement?.InventoryMovementDetail?.ItemDescription || ''
+          },
+          // Use PurchaseQuantity as FinalOrderUnits for display (will show as "Purchase Qty" in card)
+          FinalOrderUnits: plannedPurchase.PurchaseQuantity || '',
+          FinalOrderCost: null, // Not provided for Opportunity Buys
+          OnHandQuantity: inventoryMovement?.OnHandQuantity || '',
+          PeriodForecast: inventoryMovement?.PeriodForecast || '',
+          InventoryMovementId: inventoryMovement?.InventoryMovementId || '',
+          // Store PlannedPurchaseId for reference (not displayed but may be needed for updates)
+          PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
+          // Flag to indicate this is an Opportunity Buy item (for different label)
+          isOpportunityBuy: true
+        };
+        
+        combinedItems.push(combinedItem);
+      } catch (error) {
+        logToConsole(`Error loading inventory movement for ItemId ${itemId}: ${error.message}`, 'error');
+        // Create item with minimal data
+        combinedItems.push({
+          ItemId: itemId,
+          InventoryMovementDetail: {
+            ItemDescription: ''
+          },
+          FinalOrderUnits: plannedPurchase.PurchaseQuantity || '',
+          FinalOrderCost: null,
+          OnHandQuantity: '',
+          PeriodForecast: '',
+          InventoryMovementId: '',
+          PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
+          isOpportunityBuy: true
+        });
+      }
+    }
+    
+    if (combinedItems.length === 0) {
+      status('No opportunity buys found', 'info');
+      if (movementsEmpty) {
+        movementsEmpty.style.display = 'block';
+      }
+      return;
+    }
+
+    // Step 3: Fetch item images if we have item IDs
+    let imageMap = {};
+    if (itemIds.length > 0) {
+      try {
+        const imageApiPayload = {
+          org: orgInput?.value.trim() || '',
+          itemIds: itemIds
+        };
+        
+        logToConsole('\n=== Item Images API Call (Opportunity Buys) ===', 'info');
+        logToConsole(`Action: search-item-images`, 'info');
+        logToConsole(`Endpoint: /item/api/item/item/search`, 'info');
+        logToConsole(`Request Payload:`, 'info');
+        logToConsole(JSON.stringify(imageApiPayload, null, 2), 'info');
+        logToConsole(`Backend will send payload:`, 'info');
+        const backendImagePayload = {
+          Query: `ItemId IN (${itemIds.map(id => `'${id}'`).join(',')})`,
+          Template: {
+            ItemId: null,
+            SmallImageURI: null
+          }
+        };
+        logToConsole(JSON.stringify(backendImagePayload, null, 2), 'info');
+        
+        const imageRes = await api('search-item-images', imageApiPayload);
+        
+        logToConsole(`\nImage API Response:`, 'info');
+        logToConsole(JSON.stringify(imageRes, null, 2), imageRes.success ? 'success' : 'error');
+        logToConsole('=== End Image API Call ===\n', 'info');
+        
+        if (imageRes.success && imageRes.imageMap) {
+          imageMap = imageRes.imageMap;
+          logToConsole(`Loaded images for ${Object.keys(imageMap).length} item(s)`, 'success');
+        } else {
+          logToConsole(`Failed to load item images: ${imageRes.error || 'Unknown error'}`, 'error');
+        }
+      } catch (error) {
+        logToConsole(`Error loading item images: ${error.message}`, 'error');
+        // Continue rendering without images if image fetch fails
+      }
+    }
+
+    // Show Update button when items are loaded
+    if (submitChangesBtn && combinedItems.length > 0) {
+      submitChangesBtn.style.display = 'block';
+    }
+
+    // Step 4: Render cards using renderOpportunityBuysCards (shows items with images and pills)
+    renderOpportunityBuysCards(combinedItems, imageMap);
+    
+  } catch (error) {
+    if (movementsLoading) {
+      movementsLoading.style.display = 'none';
+    }
+    status('Error loading opportunity buys', 'error');
+    logToConsole(`Error: ${error.message}`, 'error');
+    logToConsole(`Error stack: ${error.stack}`, 'error');
+    if (movementsEmpty) {
+      movementsEmpty.style.display = 'block';
+    }
+  }
+}
 
 // Render Opportunity Buys cards (similar to renderMovementCards but with "Purchase Qty" label)
 function renderOpportunityBuysCards(items, imageMap = {}) {
