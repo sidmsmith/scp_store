@@ -1082,9 +1082,12 @@
       <h2 id="mainTitle" class="text-center mb-4">SCP Store v1.0.0</h2>
       
       <!-- Store Header for Cards Page -->
-      <div id="storeHeaderCards" class="store-header-cards mb-3" style="display:none;">
-        <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center;">
+      <div id="storeHeaderCards" class="store-header-cards mb-2" style="display:none;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 0.25rem;">
           <span>Store: <span id="cardsHeaderStoreId"></span></span>
+        </div>
+        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center;">
+          <span>Department: <span id="cardsHeaderDepartment"></span></span>
         </div>
       </div>
 
@@ -1130,12 +1133,8 @@
 
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0;">
-          <div style="flex: 1; text-align: center;">
-            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
-              <span>Department: <span id="headerDepartment"></span></span>
-            </div>
-          </div>
+        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
+          <div style="flex: 1;"></div>
           <button class="btn btn-sm btn-outline-secondary" id="backToStoreBtn" type="button" style="margin-left: 1rem;">
             <i class="fas fa-arrow-left"></i> Change Store
           </button>
@@ -1161,15 +1160,17 @@
 
       <!-- Inventory Movement Items Section -->
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0;">
-          <div style="flex: 1; text-align: center;">
-            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
-              <span>Department: <span id="itemsHeaderDepartment"></span></span>
-            </div>
-            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
-              <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
-            </div>
+        <!-- Header with Department and Status - displayed via itemsHeaderContainer -->
+        <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center;">
+          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
+            <span>Department: <span id="itemsHeaderDepartment"></span></span>
           </div>
+          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
+            <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
+          <div style="flex: 1;"></div>
           <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="margin-left: 1rem;">
             <i class="fas fa-arrow-left"></i> Back
           </button>

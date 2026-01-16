@@ -315,11 +315,16 @@ async function submitStoreId() {
     
     const storeHeaderCards = document.getElementById('storeHeaderCards');
     const cardsHeaderStoreId = document.getElementById('cardsHeaderStoreId');
+    const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
     if (storeHeaderCards && storeIdValue) {
       storeHeaderCards.style.display = 'block';
     }
     if (cardsHeaderStoreId && storeIdValue) {
       cardsHeaderStoreId.textContent = storeIdValue;
+    }
+    // Set Department to N/A initially (will be updated when orders load)
+    if (cardsHeaderDepartment) {
+      cardsHeaderDepartment.textContent = 'N/A';
     }
   
   // Removed: status('Store loaded', 'success');
@@ -786,11 +791,16 @@ if (backToCardsBtn) {
       
       const storeHeaderCards = document.getElementById('storeHeaderCards');
       const cardsHeaderStoreId = document.getElementById('cardsHeaderStoreId');
+      const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
       if (storeHeaderCards && storeId) {
         storeHeaderCards.style.display = 'block';
       }
       if (cardsHeaderStoreId && storeId) {
         cardsHeaderStoreId.textContent = storeId;
+      }
+      // Set Department to N/A initially (will be updated when orders load)
+      if (cardsHeaderDepartment) {
+        cardsHeaderDepartment.textContent = 'N/A';
       }
     
     // Removed: status('', 'info'); // Clear status messages
@@ -1065,9 +1075,15 @@ function renderOrderCards(orders) {
           movementsContainer.setAttribute('data-order-status', orderStatusValue);
         }
         
-        // Update header with Department and Order Status (Store is already in main header)
+        // Update header with Department and Order Status in itemsHeaderContainer (Store is already in main header)
+        const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
         const itemsHeaderDepartment = document.getElementById('itemsHeaderDepartment');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+        
+        // Show the header container
+        if (itemsHeaderContainer) {
+          itemsHeaderContainer.style.display = 'block';
+        }
         
         // Get Department from the order's SubGroup (from data attribute or variable)
         if (itemsHeaderDepartment) {
@@ -1827,8 +1843,9 @@ window.addEventListener('load', async () => {
       if (cardsSection) {
         cardsSection.style.display = 'none';
       }
+      // Keep logo visible on ORG and Store prompt pages
       if (logoContainer) {
-        logoContainer.style.display = 'none';
+        logoContainer.style.display = 'block';
       }
       if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
         consoleSection.style.display = 'none';
