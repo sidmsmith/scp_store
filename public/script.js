@@ -359,7 +359,7 @@ storeIdInput?.addEventListener('keypress', async e => {
 let quaggaInitialized = false;
 let scannerRunning = false;
 let lastScanTime = 0;
-const SCAN_DEBOUNCE_MS = 200; // Simple debounce to prevent rapid duplicate scans
+let detectionHandler = null;
 
 function initBarcodeScanner() {
   if (quaggaInitialized) return;
@@ -377,14 +377,17 @@ function initBarcodeScanner() {
   
   // Close scanner handlers
   const closeScannerBtn = document.getElementById('closeScannerBtn');
-  const stopScannerBtn = document.getElementById('stopScannerBtn');
   const cancelScannerBtn = document.getElementById('cancelScannerBtn');
   
   function stopScanner() {
     if (scannerRunning && typeof Quagga !== 'undefined') {
       try {
         Quagga.stop();
-        Quagga.offDetected(); // Remove all event listeners
+        // Remove detection handler if it exists
+        if (detectionHandler) {
+          Quagga.offDetected(detectionHandler);
+          detectionHandler = null;
+        }
         scannerRunning = false;
         lastScanTime = 0;
       } catch (error) {
@@ -396,9 +399,6 @@ function initBarcodeScanner() {
   
   if (closeScannerBtn) {
     closeScannerBtn.addEventListener('click', stopScanner);
-  }
-  if (stopScannerBtn) {
-    stopScannerBtn.addEventListener('click', stopScanner);
   }
   if (cancelScannerBtn) {
     cancelScannerBtn.addEventListener('click', stopScanner);
@@ -413,7 +413,10 @@ function initBarcodeScanner() {
 }
 
 function startBarcodeScanner() {
-  if (scannerRunning) return;
+  if (scannerRunning) {
+    logToConsole('Scanner already running', 'info');
+    return;
+  }
   
   const scannerStatus = document.getElementById('scannerStatus');
   const interactiveElement = document.querySelector('#interactive');
@@ -434,6 +437,16 @@ function startBarcodeScanner() {
     return;
   }
   
+  // Clear any existing handlers first
+  if (detectionHandler) {
+    try {
+      Quagga.offDetected(detectionHandler);
+    } catch (error) {
+      // Ignore if handler wasn't set
+    }
+    detectionHandler = null;
+  }
+  
   if (scannerStatus) {
     scannerStatus.textContent = 'Initializing camera...';
     scannerStatus.style.color = 'var(--text)';
@@ -441,6 +454,76 @@ function startBarcodeScanner() {
   
   // Clear any existing content
   interactiveElement.innerHTML = '';
+  
+  // Create detection handler function
+  detectionHandler = function(result) {
+    if (!scannerRunning) return;
+    
+    const code = result.codeResult.code;
+    if (!code || code.length === 0) return;
+    
+    const format = result.codeResult.format || '';
+    const now = Date.now();
+    
+    // Simple debounce to prevent rapid duplicate scans
+    if (now - lastScanTime < 200) {
+      return;
+    }
+    
+    // Calculate confidence from decoded codes
+    let confidence = 0;
+    if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
+      const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
+      confidence = validCodes / result.codeResult.decodedCodes.length;
+    }
+    
+    logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%)`, 'info');
+    
+    // Accept if code exists and confidence is reasonable (very low threshold to accept scans)
+    const minConfidence = (format === 'code_128' || format === 'code_39') ? 0.15 : 0.25;
+    
+    if (confidence < minConfidence) {
+      logToConsole(`Low confidence scan, ignoring: ${code} (${(confidence * 100).toFixed(1)}%)`, 'warning');
+      return;
+    }
+    
+    lastScanTime = now;
+    logToConsole(`Accepting barcode scan: ${code}`, 'success');
+    
+    // Stop scanner
+    try {
+      Quagga.stop();
+      Quagga.offDetected(detectionHandler);
+      detectionHandler = null;
+      scannerRunning = false;
+    } catch (error) {
+      console.error('Error stopping scanner:', error);
+    }
+    
+    // Fill Store ID input
+    if (storeIdInput) {
+      storeIdInput.value = code;
+      storeIdInput.focus();
+    }
+    
+    // Update status
+    const scannerStatus = document.getElementById('scannerStatus');
+    if (scannerStatus) {
+      scannerStatus.textContent = `Scanned: ${code}`;
+      scannerStatus.style.color = 'green';
+    }
+    
+    // Close modal after a brief delay
+    setTimeout(() => {
+      const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
+      if (scannerModal) {
+        scannerModal.hide();
+      }
+    }, 500);
+  };
+  
+  // Set up detection handler BEFORE init (critical!)
+  Quagga.onDetected(detectionHandler);
   
   // Initialize QuaggaJS with standard configuration
   Quagga.init({
@@ -488,6 +571,13 @@ function startBarcodeScanner() {
       }
       logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
       scannerRunning = false;
+      // Clean up handler on error
+      if (detectionHandler) {
+        try {
+          Quagga.offDetected(detectionHandler);
+        } catch (e) {}
+        detectionHandler = null;
+      }
       return;
     }
     
@@ -500,72 +590,6 @@ function startBarcodeScanner() {
     
     Quagga.start();
     logToConsole('Barcode scanner started', 'info');
-  });
-  
-  // Set up detection handler OUTSIDE of init callback (this is critical!)
-  Quagga.onDetected((result) => {
-    if (!scannerRunning) return;
-    
-    const code = result.codeResult.code;
-    const format = result.codeResult.format || '';
-    const now = Date.now();
-    
-    // Simple debounce to prevent rapid duplicate scans
-    if (now - lastScanTime < SCAN_DEBOUNCE_MS) {
-      return;
-    }
-    
-    // Calculate confidence from decoded codes
-    let confidence = 0;
-    if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
-      const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
-      confidence = validCodes / result.codeResult.decodedCodes.length;
-    }
-    
-    logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%)`, 'info');
-    
-    // Accept if code exists and confidence is reasonable (lower threshold for common formats)
-    if (code && code.length > 0) {
-      const minConfidence = (format === 'code_128' || format === 'code_39') ? 0.2 : 0.3;
-      
-      if (confidence < minConfidence) {
-        logToConsole(`Low confidence scan, ignoring: ${code} (${(confidence * 100).toFixed(1)}%)`, 'warning');
-        return;
-      }
-      
-      lastScanTime = now;
-      logToConsole(`Accepting barcode scan: ${code}`, 'success');
-      
-      // Stop scanner
-      try {
-        Quagga.stop();
-        Quagga.offDetected(); // Remove event listeners
-        scannerRunning = false;
-      } catch (error) {
-        console.error('Error stopping scanner:', error);
-      }
-      
-      // Fill Store ID input
-      if (storeIdInput) {
-        storeIdInput.value = code;
-        storeIdInput.focus();
-      }
-      
-      // Update status
-      const scannerStatus = document.getElementById('scannerStatus');
-      if (scannerStatus) {
-        scannerStatus.textContent = `Scanned: ${code}`;
-        scannerStatus.style.color = 'green';
-      }
-      
-      // Close modal after a brief delay
-      setTimeout(() => {
-        const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
-        if (scannerModal) {
-          scannerModal.hide();
-        }
-      }, 500);
-    }
   });
 }
 
