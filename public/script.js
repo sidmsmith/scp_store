@@ -1843,7 +1843,7 @@ function renderMovementCards(movements, imageMap = {}) {
         <div class="item-card-center">
           <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
           <div class="item-card-details">
-            ${finalOrderUnits !== '' ? `<div class="item-detail-line">Quantity: ${formatNumber(finalOrderUnits)}</div>` : ''}
+            ${finalOrderUnits !== '' && initialQuantity > 0 ? `<div class="item-detail-line">Order Qty: ${formatNumber(finalOrderUnits)}</div>` : ''}
             ${finalOrderCost !== null ? `<div class="item-detail-line">Price: ${formatCurrency(finalOrderCost)}</div>` : ''}
             ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
             ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
@@ -1871,6 +1871,11 @@ function renderMovementCards(movements, imageMap = {}) {
     movementCard.setAttribute('data-current-quantity', initialQuantity);
     movementCard.setAttribute('data-item-id', itemId);
     movementCard.setAttribute('data-inventory-movement-id', inventoryMovementId);
+    
+    // Initially grey out card and pill if quantity is 0
+    if (initialQuantity === 0) {
+      movementCard.style.opacity = '0.5';
+    }
     
     // Add quantity control handlers
     const quantityPill = movementCard.querySelector('.item-quantity-control');
