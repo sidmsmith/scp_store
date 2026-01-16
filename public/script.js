@@ -1589,7 +1589,6 @@ async function loadOpportunityBuys() {
           isOpportunityBuy: true
         });
       }
-    }
     
     if (combinedItems.length === 0) {
       status('No opportunity buys found', 'info');
