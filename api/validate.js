@@ -482,10 +482,9 @@ export default async function handler(req, res) {
       const clearPayload = {
         ItemId: itemId,
         SourceLocationId: sourceLocationId,
-        LocationId: locationId,
-        FinalOrderUnits: 0
+        LocationId: locationId
       };
-      const result = await apiCall('PUT', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save', token, org, clearPayload);
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ', token, org, clearPayload);
       return res.json({ success: result.error ? false : true, result });
     } catch (error) {
       return res.json({ success: false, error: error.message });

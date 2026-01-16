@@ -2335,15 +2335,14 @@ if (submitChangesBtn) {
           
           logToConsole(`\n=== Clearing item ${update.itemId} ===`, 'info');
           logToConsole(`Action: clear-soq`, 'info');
-          logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save`, 'info');
+          logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ`, 'info');
           logToConsole(`Request Payload:`, 'info');
           logToConsole(JSON.stringify(clearApiPayload, null, 2), 'info');
           logToConsole(`Backend will send payload:`, 'info');
           const backendClearPayload = {
             ItemId: update.itemId,
             SourceLocationId: sourceLocationId,
-            LocationId: locationId,
-            FinalOrderUnits: 0
+            LocationId: locationId
           };
           logToConsole(JSON.stringify(backendClearPayload, null, 2), 'info');
           logToConsole(`  ItemId: ${update.itemId}`, 'info');
