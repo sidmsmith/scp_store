@@ -1887,48 +1887,73 @@ function showReleaseOrderModal(success, message) {
         suggestedOrdersSection.style.display = 'block';
       }
       
-      // Refresh the Suggested Orders by calling the API again
-      if (storeId) {
-          // Removed: status('Refreshing orders...', 'info');
-        logToConsole(`\n=== Refreshing Orders After Release ===`, 'info');
-        
-        try {
-          const refreshPayload = {
-            org: orgInput?.value.trim() || '',
-            storeId: storeId
-          };
-          
-          logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');
-          logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
-          logToConsole(`Request Payload:`, 'info');
-          logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
-          
-          const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
-          
-          logToConsole(`\nRefresh API Response:`, 'info');
-          logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
-          logToConsole('=== End Refresh API Call ===\n', 'info');
-          
-          if (refreshRes.success && refreshRes.orders) {
-            const refreshedOrders = refreshRes.orders || [];
-            logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
-            
-            // Clear and re-render order cards with updated status
-            if (ordersContainer) {
-              ordersContainer.innerHTML = '';
-              renderOrderCards(refreshedOrders);
-              // Removed: status('Orders refreshed', 'success');
-            }
-          } else {
-            logToConsole(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
-            status(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
-          }
-        } catch (error) {
-          logToConsole(`Error refreshing orders: ${error.message}`, 'error');
-          logToConsole(`Error stack: ${error.stack}`, 'error');
-          status(`Error refreshing orders: ${error.message}`, 'error');
-        }
+      // Clear status messages when navigating
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.className = 'status';
       }
+      
+      // Keep main title hidden when showing orders
+      const mainTitle = document.getElementById('mainTitle');
+      if (mainTitle) {
+        mainTitle.style.display = 'none';
+      }
+      
+      // Show storeHeaderCards on Suggested Orders page (Store and Department)
+      const storeHeaderCards = document.getElementById('storeHeaderCards');
+      if (storeHeaderCards && storeId) {
+        storeHeaderCards.style.display = 'block';
+      }
+      
+      // Show Back button (changeStoreBtnCards) when returning to Suggested Orders page
+      if (changeStoreBtnCards) {
+        changeStoreBtnCards.style.display = 'block';
+      }
+      
+      // Wait 1 second, then refresh the Suggested Orders by calling the API again
+      setTimeout(async () => {
+        if (storeId) {
+          // Removed: status('Refreshing orders...', 'info');
+          logToConsole(`\n=== Refreshing Orders After Release ===`, 'info');
+          
+          try {
+            const refreshPayload = {
+              org: orgInput?.value.trim() || '',
+              storeId: storeId
+            };
+            
+            logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');
+            logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+            logToConsole(`Request Payload:`, 'info');
+            logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
+            
+            const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
+            
+            logToConsole(`\nRefresh API Response:`, 'info');
+            logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
+            logToConsole('=== End Refresh API Call ===\n', 'info');
+            
+            if (refreshRes.success && refreshRes.orders) {
+              const refreshedOrders = refreshRes.orders || [];
+              logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
+              
+              // Clear and re-render order cards with updated status
+              if (ordersContainer) {
+                ordersContainer.innerHTML = '';
+                renderOrderCards(refreshedOrders);
+                // Removed: status('Orders refreshed', 'success');
+              }
+            } else {
+              logToConsole(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
+              status(`Failed to refresh orders: ${refreshRes.error || 'Unknown error'}`, 'error');
+            }
+          } catch (error) {
+            logToConsole(`Error refreshing orders: ${error.message}`, 'error');
+            logToConsole(`Error stack: ${error.stack}`, 'error');
+            status(`Error refreshing orders: ${error.message}`, 'error');
+          }
+        }
+      }, 1000); // Wait 1 second before refreshing
     });
   }
   
