@@ -733,10 +733,11 @@ if (opportunityBuysCard) {
   });
 }
 
-// Back to store button handler (allows changing store)
+// Change Store button handlers (allows changing store)
 const backToStoreBtn = document.getElementById('backToStoreBtn');
-if (backToStoreBtn) {
-  backToStoreBtn.addEventListener('click', () => {
+const changeStoreBtnCards = document.getElementById('changeStoreBtnCards');
+
+function handleChangeStore() {
     // Hide suggested orders section
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'none';
@@ -774,6 +775,14 @@ if (backToStoreBtn) {
     
     // Removed: status('Enter a new Store ID', 'info');
   });
+}
+
+// Attach change store handler to both buttons
+if (backToStoreBtn) {
+  backToStoreBtn.addEventListener('click', handleChangeStore);
+}
+if (changeStoreBtnCards) {
+  changeStoreBtnCards.addEventListener('click', handleChangeStore);
 }
 
 // Back to cards button handler (for navigation within orders)
@@ -1094,9 +1103,8 @@ function renderOrderCards(orders) {
           movementsContainer.setAttribute('data-order-status', orderStatusValue);
         }
         
-        // Update header with Department and Order Status in itemsHeaderContainer (Store is already in main header)
+        // Update header with Order Status in itemsHeaderContainer (Store and Department already in main header)
         const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
-        const itemsHeaderDepartment = document.getElementById('itemsHeaderDepartment');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
         
         // Show the header container
@@ -1104,11 +1112,6 @@ function renderOrderCards(orders) {
           itemsHeaderContainer.style.display = 'block';
         }
         
-        // Get Department from the order's SubGroup (from data attribute or variable)
-        if (itemsHeaderDepartment) {
-          const department = orderCard.getAttribute('data-subgroup') || subGroup || 'N/A';
-          itemsHeaderDepartment.textContent = department;
-        }
         // Get Order Status from the order (from data attribute or variable)
         if (itemsHeaderOrderStatus) {
           const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';

@@ -1086,8 +1086,11 @@
         <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 0.25rem;">
           <span>Store: <span id="cardsHeaderStoreId"></span></span>
         </div>
-        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center;">
+        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; display: flex; justify-content: center; align-items: center; gap: 1rem;">
           <span>Department: <span id="cardsHeaderDepartment"></span></span>
+          <button class="btn btn-sm btn-outline-secondary" id="changeStoreBtnCards" type="button" style="flex-shrink: 0;">
+            <i class="fas fa-arrow-left"></i> Change Store
+          </button>
         </div>
       </div>
 
@@ -1133,12 +1136,6 @@
 
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
-          <div style="flex: 1;"></div>
-          <button class="btn btn-sm btn-outline-secondary" id="backToStoreBtn" type="button" style="margin-left: 1rem;">
-            <i class="fas fa-arrow-left"></i> Change Store
-          </button>
-        </div>
         <div class="d-flex justify-content-end mb-2" style="flex-shrink: 0;">
           <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none;">
             <i class="fas fa-arrow-left"></i> Back
@@ -1160,20 +1157,14 @@
 
       <!-- Inventory Movement Items Section -->
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
-        <!-- Header with Department and Status - displayed via itemsHeaderContainer -->
+        <!-- Header with Order Status - displayed via itemsHeaderContainer -->
         <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center;">
-          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
-            <span>Department: <span id="itemsHeaderDepartment"></span></span>
-          </div>
-          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
+          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); display: flex; justify-content: center; align-items: center; gap: 1rem;">
             <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
+            <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="flex-shrink: 0;">
+              <i class="fas fa-arrow-left"></i> Back
+            </button>
           </div>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
-          <div style="flex: 1;"></div>
-          <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="margin-left: 1rem;">
-            <i class="fas fa-arrow-left"></i> Back
-          </button>
         </div>
         <div id="movementsContainer" class="orders-container">
           <!-- Movement cards will be dynamically inserted here -->
