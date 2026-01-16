@@ -981,6 +981,14 @@ function formatNumber(value) {
   return parseFloat(value).toFixed(0);
 }
 
+// Format forecast value (always shows 2 decimal places)
+function formatForecast(value) {
+  if (value === null || value === undefined || value === '') return '0.00';
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return '0.00';
+  return numValue.toFixed(2);
+}
+
 // Load Opportunity Buys items (directly show items like Suggested Orders Items page)
 async function loadOpportunityBuysCards() {
   if (!token) {
@@ -1312,8 +1320,8 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     const itemId = item.ItemId || `Item ${index + 1}`;
     const itemDescription = item.InventoryMovementDetail?.ItemDescription || '';
     const purchaseQuantity = item.FinalOrderUnits || ''; // This is PurchaseQuantity from PlannedPurchase
-    const onHandQuantity = item.OnHandQuantity || '';
-    const periodForecast = item.PeriodForecast || '';
+    const onHandQuantity = item.OnHandQuantity ?? ''; // Use nullish coalescing to preserve 0
+    const periodForecast = item.PeriodForecast ?? ''; // Use nullish coalescing to preserve 0
     
     // Initialize quantity from PurchaseQuantity
     const initialQuantity = purchaseQuantity !== '' ? parseFloat(purchaseQuantity) : 0;
@@ -1337,8 +1345,8 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
           <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
           <div class="item-card-details">
             ${purchaseQuantity !== '' ? `<div class="item-detail-line">Purchase Qty: ${formatNumber(purchaseQuantity)}</div>` : ''}
-            ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
-            ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
+            <div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity !== '' ? onHandQuantity : 0)}</div>
+            <div class="item-detail-line">Forecast: ${formatForecast(periodForecast !== '' ? periodForecast : 0)}</div>
           </div>
         </div>
       </div>
@@ -1793,8 +1801,8 @@ function renderMovementCards(movements, imageMap = {}) {
     const itemDescription = movement.InventoryMovementDetail?.ItemDescription || movement.ItemDescription || '';
     const finalOrderUnits = movement.FinalOrderUnits || movement.FinalOrderQty || '';
     const finalOrderCost = movement.FinalOrderCost || null;
-    const onHandQuantity = movement.OnHandQuantity || movement.OnHandQty || '';
-    const periodForecast = movement.PeriodForecast || '';
+    const onHandQuantity = movement.OnHandQuantity ?? movement.OnHandQty ?? ''; // Use nullish coalescing to preserve 0
+    const periodForecast = movement.PeriodForecast ?? ''; // Use nullish coalescing to preserve 0
     
     // Initialize quantity from FinalOrderUnits
     const initialQuantity = finalOrderUnits !== '' ? parseFloat(finalOrderUnits) : 0;
@@ -1818,8 +1826,8 @@ function renderMovementCards(movements, imageMap = {}) {
           <div class="item-card-details">
             ${finalOrderUnits !== '' ? `<div class="item-detail-line">Quantity: ${formatNumber(finalOrderUnits)}</div>` : ''}
             ${finalOrderCost !== null ? `<div class="item-detail-line">Price: ${formatCurrency(finalOrderCost)}</div>` : ''}
-            ${onHandQuantity !== '' ? `<div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity)}</div>` : ''}
-            ${periodForecast !== '' ? `<div class="item-detail-line">Forecast: ${formatNumber(periodForecast)}</div>` : ''}
+            <div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity !== '' ? onHandQuantity : 0)}</div>
+            <div class="item-detail-line">Forecast: ${formatForecast(periodForecast !== '' ? periodForecast : 0)}</div>
           </div>
         </div>
       </div>
