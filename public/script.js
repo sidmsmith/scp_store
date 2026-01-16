@@ -1191,36 +1191,6 @@ function renderOrderCards(orders) {
           logToConsole(JSON.stringify(movements, null, 2), 'info');
         }
         
-        // Store sourceLocationId, locationId, and orderStatus for review API call
-        if (movementsContainer) {
-          movementsContainer.setAttribute('data-source-location-id', sourceLocationId);
-          movementsContainer.setAttribute('data-location-id', locationId);
-          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || '';
-          movementsContainer.setAttribute('data-order-status', orderStatusValue);
-        }
-        
-        // Update header with Source and Order Status in itemsHeaderContainer (Store and Department already in main header)
-        // Always show header with Back button, even when no items found
-        const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
-        const itemsHeaderSource = document.getElementById('itemsHeaderSource');
-        const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
-        
-        // Show the header container (contains Back button)
-        if (itemsHeaderContainer) {
-          itemsHeaderContainer.style.display = 'block';
-        }
-        
-        // Set Source location
-        if (itemsHeaderSource) {
-          itemsHeaderSource.textContent = sourceLocationId || 'N/A';
-        }
-        
-        // Get Order Status from the order (from data attribute or variable)
-        if (itemsHeaderOrderStatus) {
-          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
-          itemsHeaderOrderStatus.textContent = orderStatusValue;
-        }
-        
         if (movements.length === 0) {
           status('No items found', 'info');
           if (movementsEmpty) {
