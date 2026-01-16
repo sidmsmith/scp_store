@@ -360,6 +360,10 @@ let quaggaInitialized = false;
 let scannerRunning = false;
 let lastScanTime = 0;
 let detectionHandler = null;
+let lastScannedCode = '';
+let scanCount = 0;
+const MIN_CONSISTENT_SCANS = 3; // Require same code scanned 3 times consistently
+const SCAN_CONSISTENCY_WINDOW = 1000; // Window in ms for consistency check
 
 function initBarcodeScanner() {
   if (quaggaInitialized) return;
@@ -370,6 +374,8 @@ function initBarcodeScanner() {
   if (scanStoreIdBtn) {
     scanStoreIdBtn.addEventListener('click', () => {
       lastScanTime = 0;
+      lastScannedCode = '';
+      scanCount = 0;
       scannerModal.show();
       setTimeout(() => startBarcodeScanner(), 300); // Wait for modal animation
     });
@@ -390,6 +396,8 @@ function initBarcodeScanner() {
         }
         scannerRunning = false;
         lastScanTime = 0;
+        lastScannedCode = '';
+        scanCount = 0;
       } catch (error) {
         console.error('Error stopping scanner:', error);
       }
@@ -511,7 +519,6 @@ function startBarcodeScanner() {
       
       const code = result.codeResult ? result.codeResult.code : null;
       if (!code || code.length === 0) {
-        logToConsole('Empty code detected, ignoring', 'warning');
         return;
       }
       
@@ -519,29 +526,49 @@ function startBarcodeScanner() {
       const now = Date.now();
       
       // Simple debounce to prevent rapid duplicate scans
-      if (now - lastScanTime < 300) {
-        logToConsole(`Debounce: ignoring duplicate scan: ${code}`, 'info');
+      if (now - lastScanTime < 200) {
         return;
       }
       
-      // Log all detection attempts for debugging
+      // Calculate confidence from decoded codes
       let confidence = 0;
       if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
         const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
         confidence = validCodes / result.codeResult.decodedCodes.length;
       }
       
-      logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%)`, 'info');
-      console.log('Barcode detection result:', {
-        code: code,
-        format: format,
-        confidence: confidence,
-        result: result
-      });
+      // Filter out low confidence scans - prioritize code_128 and code_39
+      const minConfidence = (format === 'code_128' || format === 'code_39') ? 0.3 : 0.5;
+      if (confidence < minConfidence) {
+        logToConsole(`Low confidence scan ignored: ${code} (${format}, ${(confidence * 100).toFixed(1)}%)`, 'warning');
+        return;
+      }
       
-      // Accept ANY valid code for now (no confidence filtering) to test if detection works
+      // Consistency check: require same code to be scanned multiple times
+      // Reset if code changed or too much time passed
+      if (code !== lastScannedCode || (now - lastScanTime) > SCAN_CONSISTENCY_WINDOW) {
+        scanCount = 1;
+        lastScannedCode = code;
+      } else {
+        scanCount++;
+      }
+      
       lastScanTime = now;
-      logToConsole(`Accepting barcode scan: ${code}`, 'success');
+      
+      logToConsole(`Barcode detected: ${code} (format: ${format}, confidence: ${(confidence * 100).toFixed(1)}%, count: ${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
+      
+      // Only accept if we've seen the same code multiple times consistently
+      if (scanCount < MIN_CONSISTENT_SCANS) {
+        // Show progress in status
+        if (scannerStatus) {
+          scannerStatus.textContent = `Detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS}) - Keep steady...`;
+          scannerStatus.style.color = 'var(--primary)';
+        }
+        return;
+      }
+      
+      // Code confirmed - accept it
+      logToConsole(`Barcode confirmed: ${code} (scanned ${scanCount} times consistently)`, 'success');
       
       // Stop scanner
       try {
@@ -549,6 +576,8 @@ function startBarcodeScanner() {
         Quagga.offDetected(detectionHandler);
         detectionHandler = null;
         scannerRunning = false;
+        lastScannedCode = '';
+        scanCount = 0;
       } catch (error) {
         console.error('Error stopping scanner:', error);
       }
@@ -560,7 +589,6 @@ function startBarcodeScanner() {
       }
       
       // Update status
-      const scannerStatus = document.getElementById('scannerStatus');
       if (scannerStatus) {
         scannerStatus.textContent = `Scanned: ${code}`;
         scannerStatus.style.color = 'green';
@@ -2490,6 +2518,7 @@ if (typeof forecastFileInput !== 'undefined' && forecastFileInput) {
 }
 
 // Initialize file input shading on load
+const forecastFileDisplay = document.getElementById('forecastFileDisplay');
 if (forecastFileDisplay) {
   updateFileInputShading(forecastFileDisplay, true);
 }
