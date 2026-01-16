@@ -1018,7 +1018,12 @@ async function loadOpportunityBuysCards() {
     refreshOrdersBtn.style.display = 'none';
   }
   
-  // Keep storeHeaderCards visible (shows Store and Department)
+  // Hide storeHeaderCards (Store and Department) for Opportunity Buys
+  const storeHeaderCards = document.getElementById('storeHeaderCards');
+  if (storeHeaderCards) {
+    storeHeaderCards.style.display = 'none';
+  }
+  
   // Hide Change Store button on Opportunity Buys page
   if (changeStoreBtnCards) {
     changeStoreBtnCards.style.display = 'none';
@@ -1030,21 +1035,10 @@ async function loadOpportunityBuysCards() {
     mainTitle.style.display = 'none';
   }
   
-  // Show header with Back button (clear Source and Order Status - not applicable for Opportunity Buys)
+  // Hide itemsHeaderContainer (Source and Order Status) for Opportunity Buys
   const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
-  const itemsHeaderSource = document.getElementById('itemsHeaderSource');
-  const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
-  
   if (itemsHeaderContainer) {
-    itemsHeaderContainer.style.display = 'block';
-  }
-  
-  // Clear Source and Order Status for Opportunity Buys
-  if (itemsHeaderSource) {
-    itemsHeaderSource.textContent = '';
-  }
-  if (itemsHeaderOrderStatus) {
-    itemsHeaderOrderStatus.textContent = '';
+    itemsHeaderContainer.style.display = 'none';
   }
   
   if (movementsLoading) {
@@ -1347,8 +1341,7 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
         <div class="item-card-center">
           <div class="item-card-title" style="text-align: left;">${plannedPurchaseName}</div>
           <div class="item-card-details">
-            <div class="item-detail-line">Item: ${itemId}</div>
-            ${itemDescription ? `<div class="item-detail-line">Description: ${itemDescription}</div>` : ''}
+            <div class="item-detail-line">Item: ${itemId}${itemDescription ? ` - ${itemDescription}` : ''}</div>
             ${purchaseQuantity !== '' ? `<div class="item-detail-line">Purchase Qty: ${formatNumber(purchaseQuantity)}</div>` : ''}
             <div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity !== '' ? onHandQuantity : 0)}</div>
             <div class="item-detail-line">Forecast: ${formatForecast(periodForecast !== '' ? periodForecast : 0)}</div>
