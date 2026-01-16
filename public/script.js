@@ -12,11 +12,15 @@ const locationParam = urlParams.get('Location');
 const organizationParam = urlParams.get('Organization');
 const orgParam = urlParams.get('ORG'); // Also support ORG parameter
 const businessUnitParam = urlParams.get('BusinessUnit');
+const storeParam = urlParams.get('Store');
+const consoleParam = urlParams.get('Console');
 
 // Store URL parameters for use
 const urlLocation = locationParam || null;
 const urlOrg = organizationParam || orgParam || null; // Support both Organization and ORG
 const urlBusinessUnit = businessUnitParam || null;
+const urlStore = storeParam || null;
+const urlConsole = consoleParam || null;
 
 // Ensure ORG is blank on load (security) unless from URL
 if (urlOrg) {
