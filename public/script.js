@@ -2261,11 +2261,25 @@ if (submitChangesBtn) {
           finalOrderQty: update.quantity
         };
         
-        logToConsole(`\nUpdating item ${update.itemId}:`, 'info');
+        logToConsole(`\n=== Updating item ${update.itemId} ===`, 'info');
+        logToConsole(`Action: save-suggested-order-line`, 'info');
+        logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save`, 'info');
+        logToConsole(`Request Payload:`, 'info');
+        logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
+        logToConsole(`Backend will send payload:`, 'info');
+        const backendUpdatePayload = {
+          InventoryMovementId: update.inventoryMovementId,
+          FinalOrderUnits: update.quantity
+        };
+        logToConsole(JSON.stringify(backendUpdatePayload, null, 2), 'info');
         logToConsole(`  InventoryMovementId: ${update.inventoryMovementId}`, 'info');
         logToConsole(`  FinalOrderQty: ${update.quantity} (was ${update.initialQuantity})`, 'info');
         
         const res = await api('save-suggested-order-line', apiPayload);
+        
+        logToConsole(`\nAPI Response:`, 'info');
+        logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
+        logToConsole('=== End Update API Call ===\n', 'info');
         
         if (res.success) {
           successCount++;
@@ -2319,12 +2333,28 @@ if (submitChangesBtn) {
             locationId: locationId
           };
           
-          logToConsole(`\nClearing item ${update.itemId}:`, 'info');
+          logToConsole(`\n=== Clearing item ${update.itemId} ===`, 'info');
+          logToConsole(`Action: clear-soq`, 'info');
+          logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save`, 'info');
+          logToConsole(`Request Payload:`, 'info');
+          logToConsole(JSON.stringify(clearApiPayload, null, 2), 'info');
+          logToConsole(`Backend will send payload:`, 'info');
+          const backendClearPayload = {
+            ItemId: update.itemId,
+            SourceLocationId: sourceLocationId,
+            LocationId: locationId,
+            FinalOrderUnits: 0
+          };
+          logToConsole(JSON.stringify(backendClearPayload, null, 2), 'info');
           logToConsole(`  ItemId: ${update.itemId}`, 'info');
           logToConsole(`  LocationId: ${locationId}`, 'info');
           logToConsole(`  SourceLocationId: ${sourceLocationId}`, 'info');
           
           const clearRes = await api('clear-soq', clearApiPayload);
+          
+          logToConsole(`\nAPI Response:`, 'info');
+          logToConsole(JSON.stringify(clearRes, null, 2), clearRes.success ? 'success' : 'error');
+          logToConsole('=== End Clear API Call ===\n', 'info');
           
           if (clearRes.success) {
             clearSuccessCount++;
