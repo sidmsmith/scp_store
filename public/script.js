@@ -224,6 +224,11 @@ async function authenticate() {
     storeIdInput?.focus();
   }
   
+  // Show logo on Store prompt page
+  if (logoContainer) {
+    logoContainer.style.display = 'block';
+  }
+  
   // Show console toggle button after authentication (unless Console=N)
   if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
     consoleToggleContainer.style.display = 'block';
@@ -967,6 +972,12 @@ function renderOrderCards(orders) {
       }
       if (inventoryMovementSection) {
         inventoryMovementSection.style.display = 'block';
+      }
+      
+      // Hide storeHeaderCards on Items page (Department/Status shown in itemsHeaderContainer)
+      const storeHeaderCards = document.getElementById('storeHeaderCards');
+      if (storeHeaderCards) {
+        storeHeaderCards.style.display = 'none';
       }
       
       // Keep main title hidden when showing items
@@ -1862,6 +1873,10 @@ window.addEventListener('load', async () => {
       orgInput?.focus();
     } else if (urlStore) {
       // Auto-validate store if Store parameter is present
+      // Show logo on Store prompt page
+      if (logoContainer) {
+        logoContainer.style.display = 'block';
+      }
       if (storeIdInput) {
         storeIdInput.value = urlStore.trim();
         storeId = urlStore.trim();
