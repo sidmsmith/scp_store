@@ -350,14 +350,14 @@ storeIdInput?.addEventListener('keypress', async e => {
   await submitStoreId();
 });
 
-// Barcode Scanner for Store ID (using BarcodeDetector API + ZXing fallback)
+// Barcode Scanner for Store ID (using QuaggaJS with improved consistency checking)
 let scannerInitialized = false;
 let scannerRunning = false;
 let lastScanTime = 0;
 let lastScannedCode = '';
 let scanCount = 0;
-const MIN_CONSISTENT_SCANS = 2; // Require same code scanned 2 times for reliability
-const SCAN_CONSISTENCY_WINDOW = 1000; // Window in ms for consistency check
+const MIN_CONSISTENT_SCANS = 5; // Require same code scanned 5 times for reliability
+const SCAN_CONSISTENCY_WINDOW = 1500; // Window in ms for consistency check
 
 function initBarcodeScanner() {
   if (scannerInitialized) return;
@@ -380,19 +380,13 @@ function initBarcodeScanner() {
   const cancelScannerBtn = document.getElementById('cancelScannerBtn');
   
   function stopScanner() {
-    if (scannerRunning) {
+    if (scannerRunning && typeof Quagga !== 'undefined') {
       try {
-        // Stop video stream
-        const videoElement = document.getElementById('scanner-video');
-        if (videoElement && videoElement.srcObject) {
-          const stream = videoElement.srcObject;
-          stream.getTracks().forEach(track => track.stop());
-          videoElement.srcObject = null;
-        }
-        // Clear any scan intervals
-        if (window.scanInterval) {
-          clearInterval(window.scanInterval);
-          window.scanInterval = null;
+        Quagga.stop();
+        // Remove detection handler if it exists
+        if (window._currentDetectionHandler) {
+          Quagga.offDetected(window._currentDetectionHandler);
+          window._currentDetectionHandler = null;
         }
         scannerRunning = false;
         lastScanTime = 0;
@@ -437,162 +431,170 @@ function startBarcodeScanner() {
     return;
   }
   
+  if (typeof Quagga === 'undefined') {
+    if (scannerStatus) {
+      scannerStatus.textContent = 'Error: Barcode scanner library not loaded';
+      scannerStatus.style.color = 'red';
+    }
+    logToConsole('Error: QuaggaJS library not loaded', 'error');
+    return;
+  }
+  
+  // Clear any existing handlers first
+  if (window._currentDetectionHandler) {
+    try {
+      Quagga.offDetected(window._currentDetectionHandler);
+    } catch (error) {
+      // Ignore if handler wasn't set
+    }
+    window._currentDetectionHandler = null;
+  }
+  
   if (scannerStatus) {
     scannerStatus.textContent = 'Initializing camera...';
     scannerStatus.style.color = 'var(--text)';
   }
   
   // Clear any existing content
-  interactiveElement.innerHTML = '<video id="scanner-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>';
-  const videoElement = document.getElementById('scanner-video');
+  interactiveElement.innerHTML = '';
   
-  // Use BarcodeDetector API (native, more accurate) or ZXing fallback
-  const useBarcodeDetector = typeof BarcodeDetector !== 'undefined';
-  
-  // Get camera stream
-  navigator.mediaDevices.getUserMedia({
-    video: {
-      width: { min: 320, ideal: 640, max: 1280 },
-      height: { min: 240, ideal: 480, max: 720 },
-      facingMode: 'environment' // Use back camera on mobile
+  // Initialize QuaggaJS
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: interactiveElement,
+      constraints: {
+        width: { min: 320, ideal: 640, max: 1280 },
+        height: { min: 240, ideal: 480, max: 720 },
+        facingMode: "environment" // Use back camera on mobile
+      }
+    },
+    decoder: {
+      readers: [
+        "code_128_reader",  // Primary format for Store IDs
+        "code_39_reader",
+        "code_39_vin_reader",
+        "ean_reader",
+        "ean_8_reader",
+        "codabar_reader",
+        "upc_reader",
+        "upc_e_reader",
+        "i2of5_reader"
+      ],
+      debug: {
+        drawBoundingBox: true,
+        showFrequency: false,
+        drawScanline: true,
+        showPattern: false
+      },
+      patchSize: "medium",
+      showCanvas: false,
+      showPatches: false
+    },
+    locate: true,
+    numOfWorkers: 4,
+    frequency: 30,
+    halfSample: false
+  }, (err) => {
+    if (err) {
+      if (scannerStatus) {
+        scannerStatus.textContent = 'Error: Could not access camera. ' + (err.message || 'Please check camera permissions.');
+        scannerStatus.style.color = 'red';
+      }
+      logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
+      console.error('QuaggaJS init error:', err);
+      scannerRunning = false;
+      return;
     }
-  }).then(stream => {
-    videoElement.srcObject = stream;
-    videoElement.play();
+    
+    // Set up detection handler INSIDE init callback, after init succeeds
+    window._currentDetectionHandler = function(result) {
+      if (!scannerRunning) return;
+      
+      const code = result.codeResult ? result.codeResult.code : null;
+      if (!code || code.length === 0) {
+        return;
+      }
+      
+      const format = (result.codeResult && result.codeResult.format) || 'unknown';
+      const now = Date.now();
+      
+      // Debounce to prevent rapid duplicate scans
+      if (now - lastScanTime < 200) {
+        return;
+      }
+      
+      // Consistency check - require same code scanned multiple times
+      if (code !== lastScannedCode || (now - lastScanTime) > SCAN_CONSISTENCY_WINDOW) {
+        scanCount = 1;
+        lastScannedCode = code;
+      } else {
+        scanCount++;
+      }
+      
+      lastScanTime = now;
+      
+      logToConsole(`Barcode detected: ${code} (format: ${format}, count: ${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
+      
+      // Only accept if we've seen the same code multiple times consistently
+      if (scanCount < MIN_CONSISTENT_SCANS) {
+        if (scannerStatus) {
+          scannerStatus.textContent = `Detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS}) - Keep steady...`;
+          scannerStatus.style.color = 'var(--primary)';
+        }
+        return;
+      }
+      
+      // Code confirmed - accept it
+      logToConsole(`Barcode confirmed: ${code} (scanned ${scanCount} times consistently)`, 'success');
+      
+      // Stop scanner
+      try {
+        Quagga.stop();
+        Quagga.offDetected(window._currentDetectionHandler);
+        window._currentDetectionHandler = null;
+        scannerRunning = false;
+        lastScannedCode = '';
+        scanCount = 0;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+      
+      // Fill Store ID input
+      if (storeIdInput) {
+        storeIdInput.value = code;
+        storeIdInput.focus();
+      }
+      
+      // Update status
+      if (scannerStatus) {
+        scannerStatus.textContent = `Scanned: ${code}`;
+        scannerStatus.style.color = 'green';
+      }
+      
+      // Close modal after a brief delay
+      setTimeout(() => {
+        const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
+        if (scannerModal) {
+          scannerModal.hide();
+        }
+      }, 500);
+    };
+    
+    // Register detection handler AFTER init succeeds, BEFORE start
+    Quagga.onDetected(window._currentDetectionHandler);
+    
+    scannerRunning = true;
     
     if (scannerStatus) {
       scannerStatus.textContent = 'Camera ready. Point at barcode to scan.';
       scannerStatus.style.color = 'var(--text)';
     }
     
-    scannerRunning = true;
-    let scanInterval = null;
-    
-    const processFrame = async () => {
-      if (!scannerRunning) return;
-      
-      try {
-        let detectedCodes = [];
-        
-        if (useBarcodeDetector) {
-          // Use native BarcodeDetector API (more accurate)
-          const barcodeDetector = new BarcodeDetector({
-            formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'codabar', 'upc_a', 'upc_e', 'i2of5']
-          });
-          detectedCodes = await barcodeDetector.detect(videoElement);
-        } else if (typeof ZXing !== 'undefined' && ZXing.BrowserMultiFormatReader) {
-          // Fallback to ZXing library
-          const codeReader = new ZXing.BrowserMultiFormatReader();
-          try {
-            // Create canvas from video frame
-            const canvas = document.createElement('canvas');
-            canvas.width = videoElement.videoWidth || 640;
-            canvas.height = videoElement.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-            
-            const result = codeReader.decodeFromCanvas(canvas);
-            if (result) {
-              detectedCodes = [{
-                rawValue: result.text,
-                format: result.format || 'unknown'
-              }];
-            }
-          } catch (err) {
-            // ZXing decode failed, continue scanning
-          }
-        }
-        
-        if (detectedCodes && detectedCodes.length > 0) {
-          const code = detectedCodes[0].rawValue;
-          const format = detectedCodes[0].format || 'unknown';
-          
-          if (code && code.length > 0) {
-            const now = Date.now();
-            
-            // Debounce to prevent rapid duplicate scans
-            if (now - lastScanTime < 300) {
-              return;
-            }
-            
-            // Consistency check - ensure same code detected multiple times
-            if (code !== lastScannedCode || (now - lastScanTime) > SCAN_CONSISTENCY_WINDOW) {
-              scanCount = 1;
-              lastScannedCode = code;
-            } else {
-              scanCount++;
-            }
-            
-            lastScanTime = now;
-            
-            logToConsole(`Barcode detected: ${code} (format: ${format}, count: ${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
-            
-            // Only accept if we've seen the same code multiple times (for reliability)
-            if (scanCount < MIN_CONSISTENT_SCANS) {
-              if (scannerStatus) {
-                scannerStatus.textContent = `Detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS}) - Keep steady...`;
-                scannerStatus.style.color = 'var(--primary)';
-              }
-              return;
-            }
-            
-            // Code confirmed - accept it
-            logToConsole(`Barcode confirmed: ${code} (scanned ${scanCount} times consistently)`, 'success');
-            
-            // Stop scanning
-            if (scanInterval) {
-              clearInterval(scanInterval);
-              scanInterval = null;
-            }
-            if (stream) {
-              stream.getTracks().forEach(track => track.stop());
-            }
-            scannerRunning = false;
-            lastScannedCode = '';
-            scanCount = 0;
-            
-            // Fill Store ID input
-            if (storeIdInput) {
-              storeIdInput.value = code;
-              storeIdInput.focus();
-            }
-            
-            // Update status
-            if (scannerStatus) {
-              scannerStatus.textContent = `Scanned: ${code}`;
-              scannerStatus.style.color = 'green';
-            }
-            
-            // Close modal after a brief delay
-            setTimeout(() => {
-              const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
-              if (scannerModal) {
-                scannerModal.hide();
-              }
-            }, 500);
-          }
-        }
-      } catch (error) {
-        // Ignore scan errors, continue scanning
-      }
-    };
-    
-    // Process frames at ~10fps (every 100ms) for good balance of performance and accuracy
-    scanInterval = setInterval(processFrame, 100);
-    // Store scanInterval globally so it can be cleared in stopScanner
-    window.scanInterval = scanInterval;
-    
-    logToConsole('Barcode scanner started using ' + (useBarcodeDetector ? 'BarcodeDetector API' : 'ZXing library'), 'info');
-    
-  }).catch(err => {
-    if (scannerStatus) {
-      scannerStatus.textContent = 'Error: Could not access camera. ' + (err.message || 'Please check camera permissions.');
-      scannerStatus.style.color = 'red';
-    }
-    logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
-    console.error('Camera access error:', err);
-    scannerRunning = false;
-    interactiveElement.innerHTML = '';
+    // Start scanning
+    Quagga.start();
+    logToConsole('Barcode scanner started using QuaggaJS', 'info');
   });
 }
 
