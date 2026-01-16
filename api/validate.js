@@ -210,6 +210,36 @@ export default async function handler(req, res) {
     }
   }
 
+  // === SEARCH LOCATION (Store Validation) ===
+  if (action === 'search-location') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { storeId } = req.body;
+    if (!storeId) {
+      return res.json({ success: false, error: "StoreId is required" });
+    }
+
+    try {
+      const payload = {
+        Query: `LocationId IN ('${storeId}')`
+      };
+      
+      const result = await apiCall('POST', '/itemlocation/api/itemlocation/location/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      
+      // Extract locations from response (adjust based on actual API response structure)
+      const locations = result.data || result.locations || result || [];
+      
+      return res.json({ success: true, locations });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // === SEARCH PLANNED PURCHASE ===
   if (action === 'search-planned-purchase') {
     const token = req.headers.authorization?.split(' ')[1];
