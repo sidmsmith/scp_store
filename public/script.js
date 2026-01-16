@@ -1144,6 +1144,36 @@ function renderOrderCards(orders) {
           movementsLoading.style.display = 'none';
         }
         
+        // Store sourceLocationId, locationId, and orderStatus for review API call (before error check)
+        if (movementsContainer) {
+          movementsContainer.setAttribute('data-source-location-id', sourceLocationId);
+          movementsContainer.setAttribute('data-location-id', locationId);
+          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || '';
+          movementsContainer.setAttribute('data-order-status', orderStatusValue);
+        }
+        
+        // Update header with Source and Order Status in itemsHeaderContainer (Store and Department already in main header)
+        // Always show header with Back button, even when error or no items found
+        const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+        const itemsHeaderSource = document.getElementById('itemsHeaderSource');
+        const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+        
+        // Show the header container (contains Back button)
+        if (itemsHeaderContainer) {
+          itemsHeaderContainer.style.display = 'block';
+        }
+        
+        // Set Source location
+        if (itemsHeaderSource) {
+          itemsHeaderSource.textContent = sourceLocationId || 'N/A';
+        }
+        
+        // Get Order Status from the order (from data attribute or variable)
+        if (itemsHeaderOrderStatus) {
+          const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
+          itemsHeaderOrderStatus.textContent = orderStatusValue;
+        }
+        
         if (!res.success) {
           status(res.error || 'Failed to load items', 'error');
           logToConsole(`Error loading inventory movements: ${res.error || 'Unknown error'}`, 'error');
@@ -1161,21 +1191,6 @@ function renderOrderCards(orders) {
           logToConsole(JSON.stringify(movements, null, 2), 'info');
         }
         
-        if (movements.length === 0) {
-          status('No items found', 'info');
-          if (movementsEmpty) {
-            movementsEmpty.style.display = 'block';
-          }
-          if (submitChangesBtn) {
-            submitChangesBtn.style.display = 'none';
-          }
-          logToConsole('No inventory movements found', 'info');
-          return;
-        }
-        
-        status(`Found ${movements.length} item(s)`, 'success');
-        logToConsole(`Loaded ${movements.length} inventory movement(s)`, 'success');
-        
         // Store sourceLocationId, locationId, and orderStatus for review API call
         if (movementsContainer) {
           movementsContainer.setAttribute('data-source-location-id', sourceLocationId);
@@ -1185,11 +1200,12 @@ function renderOrderCards(orders) {
         }
         
         // Update header with Source and Order Status in itemsHeaderContainer (Store and Department already in main header)
+        // Always show header with Back button, even when no items found
         const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
         const itemsHeaderSource = document.getElementById('itemsHeaderSource');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
         
-        // Show the header container
+        // Show the header container (contains Back button)
         if (itemsHeaderContainer) {
           itemsHeaderContainer.style.display = 'block';
         }
@@ -1204,6 +1220,21 @@ function renderOrderCards(orders) {
           const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
           itemsHeaderOrderStatus.textContent = orderStatusValue;
         }
+        
+        if (movements.length === 0) {
+          status('No items found', 'info');
+          if (movementsEmpty) {
+            movementsEmpty.style.display = 'block';
+          }
+          if (submitChangesBtn) {
+            submitChangesBtn.style.display = 'none';
+          }
+          logToConsole('No inventory movements found', 'info');
+          return;
+        }
+        
+        status(`Found ${movements.length} item(s)`, 'success');
+        logToConsole(`Loaded ${movements.length} inventory movement(s)`, 'success');
         
         // Show submit and release order buttons when items are loaded
         if (submitChangesBtn && movements.length > 0) {
