@@ -1220,10 +1220,15 @@
 
       <!-- Inventory Movement Items Section -->
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
-        <!-- Header with Order Status - displayed via itemsHeaderContainer -->
+        <!-- Header with Source and Order Status - displayed via itemsHeaderContainer -->
         <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center; position: relative;">
           <div class="status-header-row" style="font-size: 1.125rem; font-weight: 600; color: var(--text); position: relative;">
-            <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
+            <div style="margin-bottom: 0.25rem;">
+              <span>Source: <span id="itemsHeaderSource"></span></span>
+            </div>
+            <div>
+              <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
+            </div>
             <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
               <i class="fas fa-arrow-left"></i> Back
             </button>
@@ -1244,7 +1249,7 @@
         <!-- Submit and Release Order Buttons - Sticky at bottom -->
         <div class="submit-button-container">
           <button class="btn btn-primary btn-lg" id="submitChangesBtn" type="button" style="display:none;">
-            <i class="fas fa-check"></i> Submit Changes
+            <i class="fas fa-check"></i> Update
           </button>
           <button class="btn btn-primary btn-lg" id="releaseOrderBtn" type="button" style="display:none; margin-left: 1rem;">
             <i class="fas fa-paper-plane"></i> Release Order

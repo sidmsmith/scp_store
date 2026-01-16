@@ -1145,13 +1145,19 @@ function renderOrderCards(orders) {
           movementsContainer.setAttribute('data-order-status', orderStatusValue);
         }
         
-        // Update header with Order Status in itemsHeaderContainer (Store and Department already in main header)
+        // Update header with Source and Order Status in itemsHeaderContainer (Store and Department already in main header)
         const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+        const itemsHeaderSource = document.getElementById('itemsHeaderSource');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
         
         // Show the header container
         if (itemsHeaderContainer) {
           itemsHeaderContainer.style.display = 'block';
+        }
+        
+        // Set Source location
+        if (itemsHeaderSource) {
+          itemsHeaderSource.textContent = sourceLocationId || 'N/A';
         }
         
         // Get Order Status from the order (from data attribute or variable)
