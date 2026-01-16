@@ -1,6 +1,8 @@
 // public/script.js
 const orgInput = document.getElementById('org');
 const storeIdInput = document.getElementById('storeId');
+const scanStoreIdBtn = document.getElementById('scanStoreIdBtn');
+const barcodeScannerModal = document.getElementById('barcodeScannerModal');
 const statusEl = document.getElementById('status');
 const themeSelectorBtn = document.getElementById('themeSelectorBtn');
 const themeModal = new bootstrap.Modal(document.getElementById('themeModal'));
@@ -327,6 +329,166 @@ async function submitStoreId() {
 storeIdInput?.addEventListener('keypress', async e => {
   if (e.key !== 'Enter') return;
   await submitStoreId();
+});
+
+// Barcode Scanner for Store ID
+let quaggaInitialized = false;
+let scannerRunning = false;
+
+function initBarcodeScanner() {
+  if (quaggaInitialized) return;
+  
+  const scannerModal = new bootstrap.Modal(barcodeScannerModal);
+  
+  // Open scanner modal
+  if (scanStoreIdBtn) {
+    scanStoreIdBtn.addEventListener('click', () => {
+      scannerModal.show();
+      setTimeout(() => startBarcodeScanner(), 300); // Wait for modal animation
+    });
+  }
+  
+  // Close scanner handlers
+  const closeScannerBtn = document.getElementById('closeScannerBtn');
+  const stopScannerBtn = document.getElementById('stopScannerBtn');
+  const cancelScannerBtn = document.getElementById('cancelScannerBtn');
+  
+  function stopScanner() {
+    if (scannerRunning && typeof Quagga !== 'undefined') {
+      try {
+        Quagga.stop();
+        scannerRunning = false;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+    }
+    scannerModal.hide();
+  }
+  
+  if (closeScannerBtn) {
+    closeScannerBtn.addEventListener('click', stopScanner);
+  }
+  if (stopScannerBtn) {
+    stopScannerBtn.addEventListener('click', stopScanner);
+  }
+  if (cancelScannerBtn) {
+    cancelScannerBtn.addEventListener('click', stopScanner);
+  }
+  
+  // Stop scanner when modal is closed
+  barcodeScannerModal.addEventListener('hidden.bs.modal', () => {
+    stopScanner();
+  });
+  
+  quaggaInitialized = true;
+}
+
+function startBarcodeScanner() {
+  if (scannerRunning) return;
+  
+  const scannerStatus = document.getElementById('scannerStatus');
+  if (scannerStatus) {
+    scannerStatus.textContent = 'Initializing camera...';
+  }
+  
+  if (typeof Quagga === 'undefined') {
+    if (scannerStatus) {
+      scannerStatus.textContent = 'Error: Barcode scanner library not loaded';
+      scannerStatus.style.color = 'red';
+    }
+    return;
+  }
+  
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#interactive'),
+      constraints: {
+        width: { min: 320, ideal: 640, max: 1280 },
+        height: { min: 240, ideal: 480, max: 720 },
+        facingMode: "environment" // Use back camera on mobile
+      }
+    },
+    locator: {
+      patchSize: "medium",
+      halfSample: true
+    },
+    numOfWorkers: 2,
+    decoder: {
+      readers: [
+        "code_128_reader",
+        "ean_reader",
+        "ean_8_reader",
+        "code_39_reader",
+        "code_39_vin_reader",
+        "codabar_reader",
+        "upc_reader",
+        "upc_e_reader",
+        "i2of5_reader"
+      ]
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
+      const scannerStatus = document.getElementById('scannerStatus');
+      if (scannerStatus) {
+        scannerStatus.textContent = 'Error: Could not access camera. ' + (err.message || 'Please check camera permissions.');
+        scannerStatus.style.color = 'red';
+      }
+      logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
+      return;
+    }
+    
+    scannerRunning = true;
+    const scannerStatus = document.getElementById('scannerStatus');
+    if (scannerStatus) {
+      scannerStatus.textContent = 'Camera ready. Scan a barcode...';
+      scannerStatus.style.color = 'var(--text)';
+    }
+    
+    Quagga.start();
+    
+    // Listen for barcode detection
+    Quagga.onDetected(function(result) {
+      const code = result.codeResult.code;
+      logToConsole(`Barcode scanned: ${code}`, 'success');
+      
+      // Stop scanner
+      try {
+        Quagga.stop();
+        scannerRunning = false;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+      
+      // Fill Store ID input
+      if (storeIdInput) {
+        storeIdInput.value = code;
+        storeIdInput.focus();
+      }
+      
+      // Update status
+      if (scannerStatus) {
+        scannerStatus.textContent = `Scanned: ${code}`;
+        scannerStatus.style.color = 'green';
+      }
+      
+      // Close modal after a brief delay
+      setTimeout(() => {
+        const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
+        if (scannerModal) {
+          scannerModal.hide();
+        }
+        status(`Barcode scanned: ${code}`, 'success');
+      }, 500);
+    });
+  });
+}
+
+// Initialize barcode scanner on page load
+window.addEventListener('load', () => {
+  initBarcodeScanner();
 });
 
 // Card click handlers
