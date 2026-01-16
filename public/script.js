@@ -685,12 +685,8 @@ if (suggestedOrdersCard) {
       // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
       logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
       
-      // Update header with Store and Department
-      const headerStoreId = document.getElementById('headerStoreId');
+      // Update header with Department (Store is already in main header)
       const headerDepartment = document.getElementById('headerDepartment');
-      if (headerStoreId) {
-        headerStoreId.textContent = storeId || 'N/A';
-      }
       // Get Department from first order's SubGroup
       const firstOrder = orders.length > 0 ? orders[0] : null;
       const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
@@ -1071,14 +1067,10 @@ function renderOrderCards(orders) {
           movementsContainer.setAttribute('data-order-status', orderStatusValue);
         }
         
-        // Update header with Store, Department, and Order Status
-        const itemsHeaderStoreId = document.getElementById('itemsHeaderStoreId');
+        // Update header with Department and Order Status (Store is already in main header)
         const itemsHeaderDepartment = document.getElementById('itemsHeaderDepartment');
         const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
         
-        if (itemsHeaderStoreId) {
-          itemsHeaderStoreId.textContent = locationId || storeId || 'N/A';
-        }
         // Get Department from the order's SubGroup (from data attribute or variable)
         if (itemsHeaderDepartment) {
           const department = orderCard.getAttribute('data-subgroup') || subGroup || 'N/A';

@@ -613,7 +613,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 0.5rem;
-      padding-bottom: 3rem; /* Increased bottom padding so full last card is visible */
+      padding-bottom: 6rem; /* Increased bottom padding so full last card is visible */
       min-height: 0; /* Critical: Allows flex child to shrink below content size */
       -webkit-overflow-scrolling: touch;
       max-height: 100%; /* Ensure it doesn't exceed parent */
@@ -1131,10 +1131,7 @@
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0;">
-          <div id="storeHeader" class="store-header" style="flex: 1;">
-            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
-              <span>Store: <span id="headerStoreId"></span></span>
-            </div>
+          <div style="flex: 1; text-align: center;">
             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text);">
               <span>Department: <span id="headerDepartment"></span></span>
             </div>
@@ -1164,11 +1161,8 @@
 
       <!-- Inventory Movement Items Section -->
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div id="itemsHeader" class="store-header" style="flex: 1;">
-            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
-              <span>Store: <span id="itemsHeaderStoreId"></span></span>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0;">
+          <div style="flex: 1; text-align: center;">
             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">
               <span>Department: <span id="itemsHeaderDepartment"></span></span>
             </div>
