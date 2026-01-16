@@ -1088,7 +1088,8 @@ async function loadOpportunityBuysCards() {
         PurchaseQuantity: null,
         PlannedReceiptDate: null,
         PurchaseOnDate: null,
-        DaysOfSupply: null
+        DaysOfSupply: null,
+        PK: null
       }
     };
     logToConsole(JSON.stringify(backendPlannedPurchasePayload, null, 2), 'info');
@@ -1203,9 +1204,10 @@ async function loadOpportunityBuysCards() {
           OnHandQuantity: inventoryMovement?.OnHandQuantity || '',
           PeriodForecast: inventoryMovement?.PeriodForecast || '',
           InventoryMovementId: inventoryMovement?.InventoryMovementId || '',
-          // Store PlannedPurchaseId and PlannedPurchaseName for display
+          // Store PlannedPurchaseId, PlannedPurchaseName, and PK for API calls
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
           PlannedPurchaseName: plannedPurchase.PlannedPurchaseName || '',
+          PlannedPurchasePK: plannedPurchase.PK || null,
           // Flag to indicate this is an Opportunity Buy item (for different label)
           isOpportunityBuy: true
         };
@@ -1226,6 +1228,7 @@ async function loadOpportunityBuysCards() {
           InventoryMovementId: '',
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
           PlannedPurchaseName: plannedPurchase.PlannedPurchaseName || '',
+          PlannedPurchasePK: plannedPurchase.PK || null,
           isOpportunityBuy: true
         });
       }
@@ -1329,9 +1332,10 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
       ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.parentElement.innerHTML='<div class=\'item-image-placeholder\'></div>';" />`
       : '<div class="item-image-placeholder"></div>';
     
-    // Get InventoryMovementId and PlannedPurchaseId (for potential future use)
+    // Get InventoryMovementId, PlannedPurchaseId, and PK (PK used for delete API)
     const inventoryMovementId = item.InventoryMovementId || '';
     const plannedPurchaseId = item.PlannedPurchaseId || '';
+    const plannedPurchasePK = item.PlannedPurchasePK || '';
     
     itemCard.innerHTML = `
       <div class="item-card-content">
@@ -1370,6 +1374,8 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     itemCard.setAttribute('data-item-id', itemId);
     itemCard.setAttribute('data-inventory-movement-id', inventoryMovementId);
     itemCard.setAttribute('data-planned-purchase-id', plannedPurchaseId);
+    itemCard.setAttribute('data-planned-purchase-pk', plannedPurchasePK);
+    itemCard.setAttribute('data-planned-purchase-name', plannedPurchaseName);
     itemCard.setAttribute('data-is-opportunity-buy', 'true');
     
     // Initially grey out card and pill if quantity is 0
@@ -1927,6 +1933,9 @@ if (submitChangesBtn) {
     submitChangesBtn.addEventListener('click', async () => {
     if (!movementsContainer) return;
     
+    // Check if we're on Opportunity Buys page
+    const isOpportunityBuys = movementsContainer?.getAttribute('data-is-opportunity-buys') === 'true';
+    
     // Collect all item cards and their updated quantities
     const itemCards = movementsContainer.querySelectorAll('.item-card');
     const updates = [];
@@ -1939,12 +1948,21 @@ if (submitChangesBtn) {
       
       // Only include items with changed quantities
       if (currentQuantity !== initialQuantity) {
-        updates.push({
+        const update = {
           itemId: itemId,
           inventoryMovementId: inventoryMovementId,
           quantity: currentQuantity,
           initialQuantity: initialQuantity
-        });
+        };
+        
+        // For Opportunity Buys, also collect PK and other PlannedPurchase data
+        if (isOpportunityBuys) {
+          update.plannedPurchaseId = card.getAttribute('data-planned-purchase-id') || '';
+          update.plannedPurchasePK = card.getAttribute('data-planned-purchase-pk') || '';
+          update.plannedPurchaseName = card.getAttribute('data-planned-purchase-name') || '';
+        }
+        
+        updates.push(update);
       }
     });
     
@@ -1954,6 +1972,165 @@ if (submitChangesBtn) {
       return;
     }
     
+    // Handle Opportunity Buys differently
+    if (isOpportunityBuys) {
+      // Opportunity Buys update logic
+      const locationId = movementsContainer?.getAttribute('data-location-id') || storeId;
+      
+      if (!locationId) {
+        status('Missing location information', 'error');
+        logToConsole('Error: LocationId required for Opportunity Buys', 'error');
+        return;
+      }
+      
+      logToConsole(`\n=== Submitting ${updates.length} Opportunity Buys update(s) ===`, 'info');
+      
+      // Filter updates: process items with qty > 0 first, then qty = 0
+      const updatesToProcess = updates.filter(update => update.quantity > 0);
+      const updatesToDelete = updates.filter(update => update.quantity === 0);
+      
+      logToConsole(`Processing ${updatesToProcess.length} item(s) with qty > 0`, 'info');
+      if (updatesToDelete.length > 0) {
+        logToConsole(`Will delete ${updatesToDelete.length} item(s) with qty = 0`, 'info');
+      }
+      
+      let successCount = 0;
+      let errorCount = 0;
+      let deleteSuccessCount = 0;
+      let deleteErrorCount = 0;
+      const errors = [];
+      const deleteErrors = [];
+      
+      // Process items with qty > 0 (save planned purchase)
+      for (const update of updatesToProcess) {
+        try {
+          if (!update.plannedPurchaseId || !update.plannedPurchaseName || !update.itemId) {
+            logToConsole(`Skipping item ${update.itemId}: missing PlannedPurchase data`, 'error');
+            errorCount++;
+            errors.push({ itemId: update.itemId, error: 'Missing PlannedPurchase data' });
+            continue;
+          }
+          
+          const savePayload = {
+            PurchaseQuantity: update.quantity,
+            PlannedPurchaseId: update.plannedPurchaseId,
+            PlannedPurchaseName: update.plannedPurchaseName,
+            LocationId: locationId,
+            ItemId: update.itemId
+          };
+          
+          const apiPayload = {
+            org: orgInput?.value.trim() || '',
+            plannedPurchaseData: savePayload
+          };
+          
+          logToConsole(`\nSaving Opportunity Buy item ${update.itemId}:`, 'info');
+          logToConsole(`  PurchaseQuantity: ${update.quantity} (was ${update.initialQuantity})`, 'info');
+          logToConsole(`  PlannedPurchaseId: ${update.plannedPurchaseId}`, 'info');
+          logToConsole(`  PlannedPurchaseName: ${update.plannedPurchaseName}`, 'info');
+          logToConsole(`  LocationId: ${locationId}`, 'info');
+          logToConsole(`  ItemId: ${update.itemId}`, 'info');
+          logToConsole(`Request Payload:`, 'info');
+          logToConsole(JSON.stringify(savePayload, null, 2), 'info');
+          
+          const res = await api('save-planned-purchase', apiPayload);
+          
+          if (res.success) {
+            successCount++;
+            logToConsole(`  ✓ Successfully saved Opportunity Buy item ${update.itemId}`, 'success');
+          } else {
+            errorCount++;
+            const errorMsg = res.error || 'Unknown error';
+            errors.push({ itemId: update.itemId, error: errorMsg });
+            logToConsole(`  ✗ Failed to save Opportunity Buy item ${update.itemId}: ${errorMsg}`, 'error');
+          }
+        } catch (error) {
+          errorCount++;
+          const errorMsg = error.message || 'Unknown error';
+          errors.push({ itemId: update.itemId, error: errorMsg });
+          logToConsole(`  ✗ Error saving Opportunity Buy item ${update.itemId}: ${errorMsg}`, 'error');
+          logToConsole(`  Error stack: ${error.stack}`, 'error');
+        }
+      }
+      
+      // Process items with qty = 0 (delete planned purchase)
+      for (const update of updatesToDelete) {
+        try {
+          if (!update.plannedPurchasePK) {
+            logToConsole(`Skipping delete for item ${update.itemId}: missing PK`, 'error');
+            deleteErrorCount++;
+            deleteErrors.push({ itemId: update.itemId, error: 'Missing PK' });
+            continue;
+          }
+          
+          const apiPayload = {
+            org: orgInput?.value.trim() || '',
+            pk: update.plannedPurchasePK
+          };
+          
+          logToConsole(`\nDeleting Opportunity Buy item ${update.itemId}:`, 'info');
+          logToConsole(`  PK: ${update.plannedPurchasePK}`, 'info');
+          logToConsole(`  ItemId: ${update.itemId}`, 'info');
+          
+          const res = await api('delete-planned-purchase', apiPayload);
+          
+          if (res.success) {
+            deleteSuccessCount++;
+            logToConsole(`  ✓ Successfully deleted Opportunity Buy item ${update.itemId}`, 'success');
+          } else {
+            deleteErrorCount++;
+            const errorMsg = res.error || 'Unknown error';
+            deleteErrors.push({ itemId: update.itemId, error: errorMsg });
+            logToConsole(`  ✗ Failed to delete Opportunity Buy item ${update.itemId}: ${errorMsg}`, 'error');
+          }
+        } catch (error) {
+          deleteErrorCount++;
+          const errorMsg = error.message || 'Unknown error';
+          deleteErrors.push({ itemId: update.itemId, error: errorMsg });
+          logToConsole(`  ✗ Error deleting Opportunity Buy item ${update.itemId}: ${errorMsg}`, 'error');
+          logToConsole(`  Error stack: ${error.stack}`, 'error');
+        }
+      }
+      
+      // Update initial quantities for successfully processed items
+      if (successCount > 0) {
+        updatesToProcess.forEach(update => {
+          if (!errors.find(e => e.itemId === update.itemId)) {
+            const card = Array.from(itemCards).find(c => c.getAttribute('data-item-id') === update.itemId);
+            if (card) {
+              card.setAttribute('data-initial-quantity', update.quantity);
+            }
+          }
+        });
+      }
+      
+      if (deleteSuccessCount > 0) {
+        updatesToDelete.forEach(update => {
+          if (!deleteErrors.find(e => e.itemId === update.itemId)) {
+            const card = Array.from(itemCards).find(c => c.getAttribute('data-item-id') === update.itemId);
+            if (card) {
+              card.setAttribute('data-initial-quantity', 0);
+            }
+          }
+        });
+      }
+      
+      logToConsole(`\n=== Opportunity Buys Submission Complete ===`, 'info');
+      const totalSuccess = successCount + deleteSuccessCount;
+      const totalErrors = errorCount + deleteErrorCount;
+      logToConsole(`Total Success: ${totalSuccess} | Total Errors: ${totalErrors}`, totalErrors === 0 ? 'success' : 'error');
+      
+      if (errors.length > 0 || deleteErrors.length > 0) {
+        logToConsole(`\nAll Errors:`, 'error');
+        logToConsole(JSON.stringify([...errors, ...deleteErrors], null, 2), 'error');
+      }
+      
+      // Show completion modal
+      showSubmissionModal(totalSuccess, totalErrors);
+      return;
+    }
+    
+    // Original Suggested Orders logic continues here
     // Get sourceLocationId, locationId, and orderStatus from movementsContainer data attributes
     const sourceLocationId = movementsContainer?.getAttribute('data-source-location-id');
     const locationId = movementsContainer?.getAttribute('data-location-id');

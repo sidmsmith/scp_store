@@ -210,321 +210,37 @@ export default async function handler(req, res) {
     }
   }
 
-  // === SEARCH LOCATION (Store Validation) ===
-  if (action === 'search-location') {
+  // === SAVE PLANNED PURCHASE ===
+  if (action === 'save-planned-purchase') {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: "No token" });
     
-    const { storeId } = req.body;
-    if (!storeId) {
-      return res.json({ success: false, error: "StoreId is required" });
+    const { plannedPurchaseData } = req.body;
+    if (!plannedPurchaseData) {
+      return res.json({ success: false, error: "No planned purchase data provided" });
     }
 
     try {
-      const payload = {
-        Query: `LocationId IN ('${storeId}')`
-      };
-      
-      const result = await apiCall('POST', '/itemlocation/api/itemlocation/location/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      // Extract locations from response (adjust based on actual API response structure)
-      const locations = result.data || result.locations || result || [];
-      
-      return res.json({ success: true, locations });
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/save', token, org, plannedPurchaseData);
+      return res.json({ success: result.error ? false : true, result });
     } catch (error) {
       return res.json({ success: false, error: error.message });
     }
   }
 
-  // === SEARCH PLANNED PURCHASE ===
-  if (action === 'search-planned-purchase') {
+  // === DELETE PLANNED PURCHASE ===
+  if (action === 'delete-planned-purchase') {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: "No token" });
     
-    const { locationId } = req.body;
-    if (!locationId) {
-      return res.json({ success: false, error: "LocationId is required" });
+    const { pk } = req.body;
+    if (!pk) {
+      return res.json({ success: false, error: "No PK provided" });
     }
 
     try {
-      const payload = {
-        Query: `LocationId IN ('${locationId}')`,
-        Template: {
-          PlannedPurchaseId: null,
-          PlannedPurchaseName: null,
-          LocationId: null,
-          ItemId: null,
-          PurchaseQuantity: null,
-          PlannedReceiptDate: null,
-          PurchaseOnDate: null,
-          DaysOfSupply: null
-        }
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      // Extract plannedPurchases from response (adjust based on actual API response structure)
-      const plannedPurchases = result.data || result.plannedPurchases || result || [];
-      
-      return res.json({ success: true, plannedPurchases });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SEARCH INVENTORY MOVEMENT ===
-  if (action === 'search-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { itemId, locationId, sourceLocationId } = req.body;
-    
-    // Build query based on provided parameters
-    let query = '';
-    if (itemId && locationId) {
-      query = `ItemId='${itemId}' AND LocationId='${locationId}'`;
-    } else if (sourceLocationId && locationId) {
-      query = `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`;
-    } else {
-      return res.json({ success: false, error: "ItemId/LocationId or SourceLocationId/LocationId is required" });
-    }
-
-    try {
-      const payload = {
-        Query: query,
-        Template: {
-          ItemId: null,
-          InventoryMovementId: null,
-          InventoryMovementDetail: {
-            ItemDescription: null
-          },
-          FinalOrderUnits: null,
-          FinalOrderCost: null,
-          OnHandQuantity: null,
-          PeriodForecast: null
-        }
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      // Extract movements from response (adjust based on actual API response structure)
-      const movements = result.data || result.movements || result || [];
-      
-      return res.json({ success: true, movements });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SEARCH ITEM IMAGES ===
-  if (action === 'search-item-images') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { itemIds } = req.body;
-    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
-      return res.json({ success: false, error: "itemIds array is required" });
-    }
-
-    try {
-      const payload = {
-        Query: `ItemId IN (${itemIds.map(id => `'${id}'`).join(',')})`,
-        Template: {
-          ItemId: null,
-          SmallImageURI: null
-        }
-      };
-      
-      const result = await apiCall('POST', '/item/api/item/item/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      // Extract items from response and build imageMap
-      const items = result.data || result.items || result || [];
-      const imageMap = {};
-      
-      items.forEach(item => {
-        if (item.ItemId && item.SmallImageURI) {
-          imageMap[item.ItemId] = item.SmallImageURI;
-        }
-      });
-      
-      return res.json({ success: true, imageMap });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SEARCH INVENTORY MOVEMENT SUMMARY (Suggested Orders) ===
-  if (action === 'search-inventory-movement-summary') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { storeId } = req.body;
-    if (!storeId) {
-      return res.json({ success: false, error: "storeId is required" });
-    }
-
-    try {
-      const payload = {
-        Query: `LocationId='${storeId}'`,
-        Template: {
-          LocationId: null,
-          SourceLocationId: null,
-          SubGroup: null,
-          InventoryMovementSummaryId: null,
-          OrderStatus: {
-            OrderStatusId: null
-          },
-          MovementSummaryFactors: null
-        }
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      // Extract orders from response (adjust based on actual API response structure)
-      const orders = result.data || result.orders || result || [];
-      
-      return res.json({ success: true, orders });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === REVIEW INVENTORY MOVEMENT ===
-  if (action === 'review-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { sourceLocationId, locationId } = req.body;
-    if (!sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "sourceLocationId and locationId are required" });
-    }
-
-    try {
-      const payload = {
-        ItemId: null,
-        SourceLocationId: sourceLocationId,
-        LocationId: locationId,
-        RelationType: "Regular",
-        BracketId: null,
-        executeBracket: false,
-        CancelReview: false,
-        StartReview: true,
-        UseLatest: false
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      return res.json({ success: true, result });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === SAVE SUGGESTED ORDER LINE ===
-  if (action === 'save-suggested-order-line') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { inventoryMovementId, finalOrderQty } = req.body;
-    if (!inventoryMovementId || finalOrderQty === undefined) {
-      return res.json({ success: false, error: "inventoryMovementId and finalOrderQty are required" });
-    }
-
-    try {
-      const payload = {
-        InventoryMovementId: inventoryMovementId,
-        FinalOrderUnits: finalOrderQty
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/save', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      return res.json({ success: true, result });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === CLEAR SOQ ===
-  if (action === 'clear-soq') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { itemId, locationId, sourceLocationId } = req.body;
-    if (!itemId || !locationId || !sourceLocationId) {
-      return res.json({ success: false, error: "itemId, locationId, and sourceLocationId are required" });
-    }
-
-    try {
-      const payload = {
-        ItemId: itemId,
-        LocationId: locationId,
-        SourceLocationId: sourceLocationId
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      return res.json({ success: true, result });
-    } catch (error) {
-      return res.json({ success: false, error: error.message });
-    }
-  }
-
-  // === APPROVE INVENTORY MOVEMENT (Release Order) ===
-  if (action === 'approve-inventory-movement') {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "No token" });
-    
-    const { locationId, sourceLocationId } = req.body;
-    if (!locationId || !sourceLocationId) {
-      return res.json({ success: false, error: "locationId and sourceLocationId are required" });
-    }
-
-    try {
-      const payload = {
-        LocationId: locationId,
-        SourceLocationId: sourceLocationId,
-        RelationType: "Regular"
-      };
-      
-      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve', token, org, payload);
-      
-      if (result.error) {
-        return res.json({ success: false, error: result.error });
-      }
-      
-      return res.json({ success: true, result });
+      const result = await apiCall('DELETE', `/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/${pk}`, token, org);
+      return res.json({ success: result.error ? false : true, result });
     } catch (error) {
       return res.json({ success: false, error: error.message });
     }
