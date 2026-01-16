@@ -228,8 +228,12 @@
     small { color: var(--text-muted); }
     h2 { color: var(--primary); }
     
-    /* THEME SELECTOR - Mobile-first */
+    /* THEME SELECTOR - Mobile-first - Hidden for now */
     .theme-selector-btn {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      /* Hidden theme selector - can be re-enabled by uncommenting HTML button
       position: absolute;
       top: 0.75rem;
       right: 0.75rem;
@@ -249,13 +253,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      */
     }
     
+    /* Hidden theme selector hover - commented out
     .theme-selector-btn:hover {
       transform: rotate(90deg);
     }
     
-    /* Light theme: Darker icon for visibility */
+    Light theme: Darker icon for visibility
     :root.theme-light .theme-selector-btn {
       color: #666666;
     }
@@ -269,7 +275,7 @@
       opacity: 1 !important;
     }
     
-    /* Responsive theme button */
+    Responsive theme button
     @media (min-width: 768px) {
       .theme-selector-btn {
         top: 1rem;
@@ -277,6 +283,7 @@
         font-size: 1.5rem;
       }
     }
+    */
     
     /* Modal styling */
     .modal-content {
@@ -885,6 +892,13 @@
         <i class="fas fa-cog"></i>
       </button>
       
+      <!-- Theme Selector Button - Hidden for now -->
+      <!--
+      <button class="theme-selector-btn" id="themeSelectorBtn" title="Select Theme">
+        <i class="fas fa-cog"></i>
+      </button>
+      -->
+
       <!-- Manhattan Logo -->
       <div id="logoContainer" style="display:none;">
         <img src="/manhattan-logo.png" alt="Manhattan Associates" class="manhattan-logo" />
