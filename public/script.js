@@ -582,18 +582,133 @@ window.addEventListener('load', () => {
 });
 
 // Card click handlers
+// Function to load suggested orders (reusable for refresh)
+async function loadSuggestedOrders() {
+  if (!token) {
+    status('Please authenticate first', 'error');
+    return;
+  }
+  
+  if (!storeId) {
+    status('Store ID required', 'error');
+    return;
+  }
+  
+  if (ordersLoading) {
+    ordersLoading.style.display = 'block';
+  }
+  if (ordersEmpty) {
+    ordersEmpty.style.display = 'none';
+  }
+  if (ordersContainer) {
+    ordersContainer.innerHTML = '';
+  }
+  
+  try {
+    // Prepare API payload
+    const apiPayload = {
+      org: orgInput?.value.trim() || '',
+      storeId: storeId 
+    };
+    
+    // Log API call details to console
+    logToConsole('\n=== Suggested Orders API Call ===', 'info');
+    logToConsole(`Action: search-inventory-movement-summary`, 'info');
+    logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+    logToConsole(`Request Payload:`, 'info');
+    logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
+    logToConsole(`Backend will send payload:`, 'info');
+    const backendPayload = {
+      Query: `LocationId='${storeId}'`,
+      Template: {
+        LocationId: null,
+        SourceLocationId: null,
+        SubGroup: null,
+        InventoryMovementSummaryId: null,
+        OrderStatus: {
+          OrderStatusId: null
+        },
+        MovementSummaryFactors: null
+      }
+    };
+    logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
+    
+    // Call API to search inventory movement summary
+    const res = await api('search-inventory-movement-summary', apiPayload);
+    
+    // Log API response to console
+    logToConsole(`\nAPI Response:`, 'info');
+    logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
+    logToConsole('=== End API Call ===\n', 'info');
+    
+    // Show console section when API is called (unless Console=N)
+    if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
+      consoleSection.style.display = 'block';
+    }
+    if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
+      consoleToggleContainer.style.display = 'block';
+    }
+    
+    if (ordersLoading) {
+      ordersLoading.style.display = 'none';
+    }
+    
+    if (!res.success) {
+      status(res.error || 'Failed to load orders', 'error');
+      logToConsole(`Error loading suggested orders: ${res.error || 'Unknown error'}`, 'error');
+      if (ordersEmpty) {
+        ordersEmpty.style.display = 'block';
+      }
+      return;
+    }
+    
+    const orders = res.orders || [];
+    
+    logToConsole(`Orders found: ${orders.length}`, 'info');
+    if (orders.length > 0) {
+      logToConsole(`Orders data:`, 'info');
+      logToConsole(JSON.stringify(orders, null, 2), 'info');
+    }
+    
+    if (orders.length === 0) {
+      // Removed: status('No suggested orders found', 'info');
+      if (ordersEmpty) {
+        ordersEmpty.style.display = 'block';
+      }
+      logToConsole('No suggested orders found for store', 'info');
+      return;
+    }
+    
+    // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
+    logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
+    
+    // Update header with Department in storeHeaderCards (Store is already there)
+    const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
+    // Get Department from first order's SubGroup
+    const firstOrder = orders.length > 0 ? orders[0] : null;
+    const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
+    if (cardsHeaderDepartment) {
+      cardsHeaderDepartment.textContent = department;
+    }
+    
+    // Render order cards
+    renderOrderCards(orders);
+    
+  } catch (error) {
+    if (ordersLoading) {
+      ordersLoading.style.display = 'none';
+    }
+    status('Error loading orders', 'error');
+    logToConsole(`Error: ${error.message}`, 'error');
+    logToConsole(`Error stack: ${error.stack}`, 'error');
+    if (ordersEmpty) {
+      ordersEmpty.style.display = 'block';
+    }
+  }
+}
+
 if (suggestedOrdersCard) {
   suggestedOrdersCard.addEventListener('click', async () => {
-    if (!token) {
-      status('Please authenticate first', 'error');
-      return;
-    }
-    
-    if (!storeId) {
-      status('Store ID required', 'error');
-      return;
-    }
-    
     // Removed: status('Loading suggested orders...', 'info');
     await trackEvent('card_clicked', { 
       org: orgInput?.value.trim() || 'unknown',
@@ -619,117 +734,8 @@ if (suggestedOrdersCard) {
     const headerDepartment = document.getElementById('headerDepartment');
     if (headerDepartment) headerDepartment.textContent = '';
     
-    if (ordersLoading) {
-      ordersLoading.style.display = 'block';
-    }
-    if (ordersEmpty) {
-      ordersEmpty.style.display = 'none';
-    }
-    if (ordersContainer) {
-      ordersContainer.innerHTML = '';
-    }
-    
-    try {
-      // Prepare API payload
-      const apiPayload = {
-        org: orgInput?.value.trim() || '',
-        storeId: storeId 
-      };
-      
-      // Log API call details to console
-      logToConsole('\n=== Suggested Orders API Call ===', 'info');
-      logToConsole(`Action: search-inventory-movement-summary`, 'info');
-      logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
-      logToConsole(`Request Payload:`, 'info');
-      logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
-      logToConsole(`Backend will send payload:`, 'info');
-      const backendPayload = {
-        Query: `LocationId='${storeId}'`,
-        Template: {
-          LocationId: null,
-          SourceLocationId: null,
-          SubGroup: null,
-          InventoryMovementSummaryId: null,
-          OrderStatus: {
-            OrderStatusId: null
-          },
-          MovementSummaryFactors: null
-        }
-      };
-      logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
-      
-      // Call API to search inventory movement summary
-      const res = await api('search-inventory-movement-summary', apiPayload);
-      
-      // Log API response to console
-      logToConsole(`\nAPI Response:`, 'info');
-      logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
-      logToConsole('=== End API Call ===\n', 'info');
-      
-      // Show console section when API is called (unless Console=N)
-      if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
-        consoleSection.style.display = 'block';
-      }
-      if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
-        consoleToggleContainer.style.display = 'block';
-      }
-      
-      if (ordersLoading) {
-        ordersLoading.style.display = 'none';
-      }
-      
-      if (!res.success) {
-        status(res.error || 'Failed to load orders', 'error');
-        logToConsole(`Error loading suggested orders: ${res.error || 'Unknown error'}`, 'error');
-        if (ordersEmpty) {
-          ordersEmpty.style.display = 'block';
-        }
-        return;
-      }
-      
-      const orders = res.orders || [];
-      
-      logToConsole(`Orders found: ${orders.length}`, 'info');
-      if (orders.length > 0) {
-        logToConsole(`Orders data:`, 'info');
-        logToConsole(JSON.stringify(orders, null, 2), 'info');
-      }
-      
-      if (orders.length === 0) {
-        // Removed: status('No suggested orders found', 'info');
-        if (ordersEmpty) {
-          ordersEmpty.style.display = 'block';
-        }
-        logToConsole('No suggested orders found for store', 'info');
-        return;
-      }
-      
-      // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
-      logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
-      
-      // Update header with Department in storeHeaderCards (Store is already there)
-      const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
-      // Get Department from first order's SubGroup
-      const firstOrder = orders.length > 0 ? orders[0] : null;
-      const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
-      if (cardsHeaderDepartment) {
-        cardsHeaderDepartment.textContent = department;
-      }
-      
-      // Render order cards
-      renderOrderCards(orders);
-      
-    } catch (error) {
-      if (ordersLoading) {
-        ordersLoading.style.display = 'none';
-      }
-      status('Error loading orders', 'error');
-      logToConsole(`Error: ${error.message}`, 'error');
-      logToConsole(`Error stack: ${error.stack}`, 'error');
-      if (ordersEmpty) {
-        ordersEmpty.style.display = 'block';
-      }
-    }
+    // Load orders
+    await loadSuggestedOrders();
   });
 }
 
@@ -845,6 +851,14 @@ if (backToCardsBtn) {
       }
     
     // Removed: status('', 'info'); // Clear status messages
+  });
+}
+
+// Refresh Orders button handler
+const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+if (refreshOrdersBtn) {
+  refreshOrdersBtn.addEventListener('click', async () => {
+    await loadSuggestedOrders();
   });
 }
 
