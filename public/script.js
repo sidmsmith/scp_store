@@ -792,8 +792,32 @@ if (opportunityBuysCard) {
     });
     logToConsole('Opportunity Buys card clicked', 'info');
     
-    // Load Opportunity Buys items
-    await loadOpportunityBuys();
+    // Hide cards section, show orders section (reuse same section)
+    if (cardsSection) {
+      cardsSection.style.display = 'none';
+    }
+    if (suggestedOrdersSection) {
+      suggestedOrdersSection.style.display = 'block';
+    }
+    
+    // Hide refresh button (not applicable for Opportunity Buys yet)
+    const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+    if (refreshOrdersBtn) {
+      refreshOrdersBtn.style.display = 'none';
+    }
+    
+    // Hide main title and show store header
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.style.display = 'none';
+    }
+    
+    // Clear header values initially
+    const headerDepartment = document.getElementById('headerDepartment');
+    if (headerDepartment) headerDepartment.textContent = '';
+    
+    // Load Opportunity Buys (shows cards page)
+    await loadOpportunityBuysCards();
   });
 }
 
@@ -1335,20 +1359,20 @@ async function loadOpportunityBuys() {
     return;
   }
   
-  // Hide orders section, show movements section (reuse same section)
-  if (suggestedOrdersSection) {
-    suggestedOrdersSection.style.display = 'none';
-  }
-  
-  // Hide refresh button when leaving Suggested Orders section
-  const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
-  if (refreshOrdersBtn) {
-    refreshOrdersBtn.style.display = 'none';
-  }
-  
-  if (inventoryMovementSection) {
-    inventoryMovementSection.style.display = 'block';
-  }
+      // Hide orders section, show movements section
+      if (suggestedOrdersSection) {
+        suggestedOrdersSection.style.display = 'none';
+      }
+      
+      // Hide refresh button when leaving Opportunity Buys section
+      const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+      if (refreshOrdersBtn) {
+        refreshOrdersBtn.style.display = 'none';
+      }
+      
+      if (inventoryMovementSection) {
+        inventoryMovementSection.style.display = 'block';
+      }
   
   // Clear status messages when navigating
   if (statusEl) {
@@ -1477,11 +1501,15 @@ async function loadOpportunityBuys() {
     status(`Found ${plannedPurchases.length} opportunity buy(s)`, 'success');
     logToConsole(`Loaded ${plannedPurchases.length} planned purchase(s)`, 'success');
     
-    // Step 2: For each PlannedPurchase item, call inventoryMovement/search to get OnHand and Forecast
-    const combinedItems = [];
-    const itemIds = [];
+    // Step 2: For the selected PlannedPurchase, call inventoryMovement/search to get OnHand and Forecast
+    const itemId = plannedPurchase.ItemId;
+    if (!itemId) {
+      status('Item ID missing from opportunity buy', 'error');
+      return;
+    }
     
-    for (const plannedPurchase of plannedPurchases) {
+    const itemIds = [itemId];
+    const combinedItems = [];
       const itemId = plannedPurchase.ItemId;
       if (!itemId) continue;
       
