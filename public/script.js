@@ -357,8 +357,8 @@ let lastScanTime = 0;
 let detectionHandler = null;
 let lastScannedCode = '';
 let scanCount = 0;
-const MIN_CONSISTENT_SCANS = 3; // Require same code scanned 3 times consistently
-const SCAN_CONSISTENCY_WINDOW = 1000; // Window in ms for consistency check
+const MIN_CONSISTENT_SCANS = 1; // Accept on first good scan
+const SCAN_CONSISTENCY_WINDOW = 500; // Window in ms for consistency check (reduced)
 
 function initBarcodeScanner() {
   if (quaggaInitialized) return;
@@ -520,22 +520,23 @@ function startBarcodeScanner() {
       const format = (result.codeResult && result.codeResult.format) || 'unknown';
       const now = Date.now();
       
-      // Simple debounce to prevent rapid duplicate scans
-      if (now - lastScanTime < 200) {
+      // Simple debounce to prevent rapid duplicate scans (reduced for better responsiveness)
+      if (now - lastScanTime < 100) {
         return;
       }
       
-      // Calculate confidence from decoded codes
-      let confidence = 0;
+      // Calculate confidence from decoded codes (if available)
+      let confidence = 0.5; // Default to moderate confidence if we can't calculate
       if (result.codeResult.decodedCodes && result.codeResult.decodedCodes.length > 0) {
         const validCodes = result.codeResult.decodedCodes.filter(x => x.error === 0).length;
         confidence = validCodes / result.codeResult.decodedCodes.length;
       }
       
-      // Filter out low confidence scans - prioritize code_128 and code_39
-      const minConfidence = (format === 'code_128' || format === 'code_39') ? 0.3 : 0.5;
-      if (confidence < minConfidence) {
-        logToConsole(`Low confidence scan ignored: ${code} (${format}, ${(confidence * 100).toFixed(1)}%)`, 'warning');
+      // Only filter out extremely low confidence scans - very relaxed thresholds
+      // If confidence couldn't be calculated (defaults to 0.5), we'll accept it
+      const minConfidence = 0.05; // Very low threshold - accept almost everything
+      if (confidence < minConfidence && confidence > 0) {
+        logToConsole(`Extremely low confidence scan ignored: ${code} (${format}, ${(confidence * 100).toFixed(1)}%)`, 'warning');
         return;
       }
       
