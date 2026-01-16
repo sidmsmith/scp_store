@@ -1676,6 +1676,78 @@ if (submitChangesBtn) {
           }
         }
       }
+      
+      // Refresh order status on Items Page after 1 second
+      if (inventoryMovementSection && inventoryMovementSection.style.display === 'block') {
+        const isItemsPageVisible = inventoryMovementSection.style.display === 'block';
+        
+        if (isItemsPageVisible && storeId) {
+          // Get sourceLocationId and locationId from movementsContainer
+          const itemsSourceLocationId = movementsContainer?.getAttribute('data-source-location-id');
+          const itemsLocationId = movementsContainer?.getAttribute('data-location-id');
+          
+          if (itemsSourceLocationId && itemsLocationId) {
+            // Wait 1 second before refreshing
+            setTimeout(async () => {
+              logToConsole(`\n=== Refreshing Order Status on Items Page ===`, 'info');
+              
+              try {
+                const refreshPayload = {
+                  org: orgInput?.value.trim() || '',
+                  storeId: storeId
+                };
+                
+                logToConsole(`Action: search-inventory-movement-summary (refresh for Items Page)`, 'info');
+                logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
+                logToConsole(`Request Payload:`, 'info');
+                logToConsole(JSON.stringify(refreshPayload, null, 2), 'info');
+                
+                const refreshRes = await api('search-inventory-movement-summary', refreshPayload);
+                
+                logToConsole(`\nRefresh API Response:`, 'info');
+                logToConsole(JSON.stringify(refreshRes, null, 2), refreshRes.success ? 'success' : 'error');
+                logToConsole('=== End Refresh API Call ===\n', 'info');
+                
+                if (refreshRes.success && refreshRes.orders) {
+                  const refreshedOrders = refreshRes.orders || [];
+                  logToConsole(`Refreshed ${refreshedOrders.length} order(s)`, 'success');
+                  
+                  // Find the matching order by sourceLocationId and locationId
+                  const matchingOrder = refreshedOrders.find(order => {
+                    const orderSourceLocationId = order.SourceLocationId || '';
+                    const orderLocationId = order.LocationId || '';
+                    return orderSourceLocationId === itemsSourceLocationId && orderLocationId === itemsLocationId;
+                  });
+                  
+                  if (matchingOrder) {
+                    const newOrderStatus = matchingOrder.OrderStatus?.OrderStatusId || matchingOrder.OrderStatus || '';
+                    logToConsole(`Found matching order with status: ${newOrderStatus}`, 'success');
+                    
+                    // Update Order Status in header
+                    const itemsHeaderOrderStatus = document.getElementById('itemsHeaderOrderStatus');
+                    if (itemsHeaderOrderStatus && newOrderStatus) {
+                      itemsHeaderOrderStatus.textContent = newOrderStatus;
+                    }
+                    
+                    // Update data attribute for future use
+                    if (movementsContainer && newOrderStatus) {
+                      movementsContainer.setAttribute('data-order-status', newOrderStatus);
+                    }
+                  } else {
+                    logToConsole(`Matching order not found in refreshed orders`, 'warning');
+                  }
+                } else {
+                  logToConsole(`Failed to refresh order status: ${refreshRes.error || 'Unknown error'}`, 'error');
+                }
+              } catch (error) {
+                logToConsole(`Error refreshing order status on Items Page: ${error.message}`, 'error');
+                logToConsole(`Error stack: ${error.stack}`, 'error');
+                // Don't show error to user, just log it
+              }
+            }, 1000); // Wait 1 second before refreshing
+          }
+        }
+      }
     }
   });
 }
