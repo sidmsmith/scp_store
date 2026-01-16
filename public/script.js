@@ -570,7 +570,7 @@ if (suggestedOrdersCard) {
       return;
     }
     
-    status('Loading suggested orders...', 'info');
+    // Removed: status('Loading suggested orders...', 'info');
     await trackEvent('card_clicked', { 
       org: orgInput?.value.trim() || 'unknown',
       store_id: storeId || 'unknown',

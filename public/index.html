@@ -91,8 +91,13 @@
     /* Mobile-first container */
     .container {
       max-width: 100%;
-      padding: 0;
+      padding: 0.5rem;
       margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      flex: 1;
     }
     
     /* Mobile-first card */
@@ -408,6 +413,27 @@
     /* Cards Section */
     .cards-section {
       margin-top: 2rem;
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0; /* Allows flex child to shrink below content size */
+    }
+    
+    /* Scrollable cards section styling */
+    .cards-section::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .cards-section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .cards-section::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    
+    .cards-section::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
     }
     
     .option-card {
@@ -507,6 +533,11 @@
     /* Suggested Orders Section */
     .suggested-orders-section {
       margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
     
     /* Store Header */
@@ -527,9 +558,10 @@
     
     /* Orders Container - Scrollable */
     .orders-container {
-      max-height: calc(100vh - 300px);
+      flex: 1;
       overflow-y: auto;
       padding-right: 0.5rem;
+      min-height: 0; /* Allows flex child to shrink below content size */
       -webkit-overflow-scrolling: touch;
     }
     
@@ -953,6 +985,15 @@
     }
     
     /* Adjust orders container to account for sticky submit button */
+    /* Inventory Movement Section - Scrollable layout */
+    .inventory-movement-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
     .inventory-movement-section .orders-container {
       padding-bottom: 1rem;
       margin-bottom: 0;
