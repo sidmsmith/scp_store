@@ -745,6 +745,12 @@ function handleChangeStore() {
     inventoryMovementSection.style.display = 'none';
   }
   
+  // Clear status messages when navigating
+  if (statusEl) {
+    statusEl.textContent = '';
+    statusEl.className = 'status';
+  }
+  
   // Hide store header cards, show main title
   const mainTitle = document.getElementById('mainTitle');
   if (mainTitle) {
@@ -789,6 +795,12 @@ if (backToCardsBtn) {
     if (inventoryMovementSection) {
       inventoryMovementSection.style.display = 'none';
     }
+    
+    // Clear status messages when navigating
+    if (statusEl) {
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+    }
     if (cardsSection) {
       cardsSection.style.display = 'block';
     }
@@ -830,6 +842,12 @@ if (backToOrdersBtn) {
     }
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'block';
+    }
+    
+    // Clear status messages when navigating
+    if (statusEl) {
+      statusEl.textContent = '';
+      statusEl.className = 'status';
     }
     
     // Keep main title hidden when showing orders
@@ -987,6 +1005,12 @@ function renderOrderCards(orders) {
       }
       if (inventoryMovementSection) {
         inventoryMovementSection.style.display = 'block';
+      }
+      
+      // Clear status messages when navigating to Items page
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.className = 'status';
       }
       
       // Keep storeHeaderCards visible on Items page (shows Store and Department)
