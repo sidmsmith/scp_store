@@ -2263,13 +2263,13 @@ if (submitChangesBtn) {
         
         logToConsole(`\n=== Updating item ${update.itemId} ===`, 'info');
         logToConsole(`Action: save-suggested-order-line`, 'info');
-        logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save`, 'info');
+        logToConsole(`Endpoint: /aiui-facade/api/aiui-facade/view/save/com-manh-cp-aiui-facade/SuggestedOrderLine`, 'info');
         logToConsole(`Request Payload:`, 'info');
         logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
         logToConsole(`Backend will send payload:`, 'info');
         const backendUpdatePayload = {
           InventoryMovementId: update.inventoryMovementId,
-          FinalOrderUnits: update.quantity
+          FinalOrderQty: update.quantity
         };
         logToConsole(JSON.stringify(backendUpdatePayload, null, 2), 'info');
         logToConsole(`  InventoryMovementId: ${update.inventoryMovementId}`, 'info');
