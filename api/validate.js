@@ -280,6 +280,95 @@ export default async function handler(req, res) {
     }
   }
 
+  // === SEARCH INVENTORY MOVEMENT ===
+  if (action === 'search-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemId, locationId, sourceLocationId } = req.body;
+    
+    // Build query based on provided parameters
+    let query = '';
+    if (itemId && locationId) {
+      query = `ItemId='${itemId}' AND LocationId='${locationId}'`;
+    } else if (sourceLocationId && locationId) {
+      query = `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`;
+    } else {
+      return res.json({ success: false, error: "ItemId/LocationId or SourceLocationId/LocationId is required" });
+    }
+
+    try {
+      const payload = {
+        Query: query,
+        Template: {
+          ItemId: null,
+          InventoryMovementId: null,
+          InventoryMovementDetail: {
+            ItemDescription: null
+          },
+          FinalOrderUnits: null,
+          FinalOrderCost: null,
+          OnHandQuantity: null,
+          PeriodForecast: null
+        }
+      };
+      
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      
+      // Extract movements from response (adjust based on actual API response structure)
+      const movements = result.data || result.movements || result || [];
+      
+      return res.json({ success: true, movements });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH ITEM IMAGES ===
+  if (action === 'search-item-images') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.json({ success: false, error: "itemIds array is required" });
+    }
+
+    try {
+      const payload = {
+        Query: `ItemId IN (${itemIds.map(id => `'${id}'`).join(',')})`,
+        Template: {
+          ItemId: null,
+          SmallImageURI: null
+        }
+      };
+      
+      const result = await apiCall('POST', '/item/api/item/item/search', token, org, payload);
+      
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      
+      // Extract items from response and build imageMap
+      const items = result.data || result.items || result || [];
+      const imageMap = {};
+      
+      items.forEach(item => {
+        if (item.ItemId && item.SmallImageURI) {
+          imageMap[item.ItemId] = item.SmallImageURI;
+        }
+      });
+      
+      return res.json({ success: true, imageMap });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // Unknown action
   return res.status(400).json({ error: "Unknown action" });
 }
