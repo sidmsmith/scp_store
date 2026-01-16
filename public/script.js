@@ -1107,8 +1107,7 @@ function renderOrderCards(orders) {
         let imageMap = {};
         if (itemIds.length > 0) {
           try {
-            status('Loading item images...', 'info');
-            
+            // Silently fetch images without displaying status message
             const imageApiPayload = {
               org: orgInput?.value.trim() || '',
               itemIds: itemIds
