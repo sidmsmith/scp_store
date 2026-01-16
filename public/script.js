@@ -1214,8 +1214,8 @@ async function loadOpportunityBuysCards() {
           // Use PurchaseQuantity as FinalOrderUnits for display (will show as "Purchase Qty" in card)
           FinalOrderUnits: plannedPurchase.PurchaseQuantity || '',
           FinalOrderCost: null, // Not provided for Opportunity Buys
-          OnHandQuantity: inventoryMovement?.OnHandQuantity || '',
-          PeriodForecast: inventoryMovement?.PeriodForecast || '',
+          OnHandQuantity: inventoryMovement?.OnHandQuantity ?? '',
+          PeriodForecast: inventoryMovement?.PeriodForecast ?? '',
           InventoryMovementId: inventoryMovement?.InventoryMovementId || '',
           // Store PlannedPurchaseId, PlannedPurchaseName, and PK for API calls
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
@@ -1236,8 +1236,8 @@ async function loadOpportunityBuysCards() {
           },
           FinalOrderUnits: plannedPurchase.PurchaseQuantity || '',
           FinalOrderCost: null,
-          OnHandQuantity: '',
-          PeriodForecast: '',
+          OnHandQuantity: 0,
+          PeriodForecast: 0,
           InventoryMovementId: '',
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
           PlannedPurchaseName: plannedPurchase.PlannedPurchaseName || '',
@@ -1334,7 +1334,10 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     const plannedPurchaseName = item.PlannedPurchaseName || 'Opportunity Buy';
     const purchaseQuantity = item.FinalOrderUnits || ''; // This is PurchaseQuantity from PlannedPurchase
     const onHandQuantity = item.OnHandQuantity ?? ''; // Use nullish coalescing to preserve 0
-    const periodForecast = item.PeriodForecast ?? ''; // Use nullish coalescing to preserve 0
+    // Extract PeriodForecast, preserving 0 but defaulting to 0 if null/undefined/empty
+    const periodForecast = (item.PeriodForecast !== null && item.PeriodForecast !== undefined && item.PeriodForecast !== '') 
+      ? item.PeriodForecast 
+      : 0;
     
     // Initialize quantity from PurchaseQuantity
     const initialQuantity = purchaseQuantity !== '' ? parseFloat(purchaseQuantity) : 0;
@@ -1361,7 +1364,7 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
             <div class="item-detail-line">Item: ${itemId}${itemDescription ? ` - ${itemDescription}` : ''}</div>
             ${purchaseQuantity !== '' ? `<div class="item-detail-line">Purchase Qty: ${formatNumber(purchaseQuantity)}</div>` : ''}
             <div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity !== '' ? onHandQuantity : 0)}</div>
-            <div class="item-detail-line">Forecast: ${formatForecast(periodForecast !== '' ? periodForecast : 0)}</div>
+            <div class="item-detail-line">Forecast: ${formatForecast(periodForecast)}</div>
           </div>
         </div>
       </div>
