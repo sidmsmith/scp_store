@@ -191,8 +191,9 @@ async function authenticate() {
     if (cardsSection) {
       cardsSection.style.display = 'none';
     }
+    // Show logo on ORG prompt page (even on auth failure)
     if (logoContainer) {
-      logoContainer.style.display = 'none';
+      logoContainer.style.display = 'block';
     }
     if (consoleSection) {
       consoleSection.style.display = 'none';
@@ -688,13 +689,13 @@ if (suggestedOrdersCard) {
       // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
       logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
       
-      // Update header with Department (Store is already in main header)
-      const headerDepartment = document.getElementById('headerDepartment');
+      // Update header with Department in storeHeaderCards (Store is already there)
+      const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
       // Get Department from first order's SubGroup
       const firstOrder = orders.length > 0 ? orders[0] : null;
       const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
-      if (headerDepartment) {
-        headerDepartment.textContent = department;
+      if (cardsHeaderDepartment) {
+        cardsHeaderDepartment.textContent = department;
       }
       
       // Render order cards
