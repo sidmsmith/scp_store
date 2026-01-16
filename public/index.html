@@ -632,6 +632,21 @@
         z-index: 1000; /* Ensure buttons are above other content */
       }
       
+      /* Position refresh button in top-left corner of viewport (screen) on mobile */
+      #refreshOrdersBtn {
+        position: fixed !important;
+        top: 1rem !important;
+        left: 1rem !important;
+        transform: none !important;
+        width: 10% !important;
+        min-width: 60px;
+        max-width: 80px;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        z-index: 1000; /* Ensure button is above other content */
+        display: block !important; /* Show when visible */
+      }
+      
       /* Remove top padding from header containers since buttons are fixed */
       .store-header-cards {
         padding-top: 0;
@@ -1199,10 +1214,11 @@
 
       <!-- Suggested Orders Section -->
       <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-shrink: 0;">
-          <button class="btn btn-sm btn-outline-secondary" id="refreshOrdersBtn" type="button" title="Refresh Orders">
-            <i class="fas fa-sync-alt"></i>
-          </button>
+        <!-- Refresh button positioned in upper left corner (fixed) - shown/hidden via JS -->
+        <button class="btn btn-sm btn-outline-secondary" id="refreshOrdersBtn" type="button" title="Refresh Orders" style="display:none;">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <div class="d-flex justify-content-end align-items-center mb-2" style="flex-shrink: 0;">
           <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none;">
             <i class="fas fa-arrow-left"></i> Back
           </button>

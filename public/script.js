@@ -724,6 +724,12 @@ if (suggestedOrdersCard) {
       suggestedOrdersSection.style.display = 'block';
     }
     
+    // Show refresh button when Suggested Orders section is displayed
+    const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+    if (refreshOrdersBtn) {
+      refreshOrdersBtn.style.display = 'block';
+    }
+    
     // Hide main title and show store header
     const mainTitle = document.getElementById('mainTitle');
     if (mainTitle) {
@@ -790,6 +796,12 @@ function handleChangeStore() {
   // Hide cards section
   if (cardsSection) {
     cardsSection.style.display = 'none';
+  }
+  
+  // Hide refresh button when leaving Suggested Orders section
+  const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+  if (refreshOrdersBtn) {
+    refreshOrdersBtn.style.display = 'none';
   }
   
   // Clear store ID to allow re-entry
@@ -870,6 +882,12 @@ if (backToOrdersBtn) {
     }
     if (suggestedOrdersSection) {
       suggestedOrdersSection.style.display = 'block';
+    }
+    
+    // Show refresh button when Suggested Orders section is displayed
+    const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+    if (refreshOrdersBtn) {
+      refreshOrdersBtn.style.display = 'block';
     }
     
     // Clear status messages when navigating
@@ -1031,6 +1049,13 @@ function renderOrderCards(orders) {
       if (suggestedOrdersSection) {
         suggestedOrdersSection.style.display = 'none';
       }
+      
+      // Hide refresh button when leaving Suggested Orders section
+      const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+      if (refreshOrdersBtn) {
+        refreshOrdersBtn.style.display = 'none';
+      }
+      
       if (inventoryMovementSection) {
         inventoryMovementSection.style.display = 'block';
       }
