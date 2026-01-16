@@ -1017,8 +1017,8 @@
       flex-wrap: nowrap; /* Force single line on mobile */
     }
     
-    /* On very small screens, allow wrapping only if absolutely necessary */
-    @media (max-width: 320px) {
+    /* On very small screens, reduce gap and padding */
+    @media (max-width: 374px) {
       .submit-button-container {
         gap: 0.5rem;
         padding: 0.75rem 0.5rem;
@@ -1031,16 +1031,18 @@
     }
     
     #submitChangesBtn {
-      min-width: 120px;
+      min-width: 0; /* Allow buttons to shrink below 120px on very small screens */
       max-width: 50%;
       flex: 1;
       font-weight: 600;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.75rem; /* Smaller base font for very small screens */
       background: var(--primary) !important;
       border-color: var(--primary) !important;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     #submitChangesBtn:hover {
@@ -1051,16 +1053,18 @@
     }
     
     #releaseOrderBtn {
-      min-width: 120px;
+      min-width: 0; /* Allow buttons to shrink below 120px on very small screens */
       max-width: 50%;
       flex: 1;
       font-weight: 600;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.75rem; /* Smaller base font for very small screens */
       background: var(--success) !important;
       border-color: var(--success) !important;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     #releaseOrderBtn:hover {
@@ -1070,13 +1074,32 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     
-    /* On larger screens, allow buttons to be slightly wider */
+    /* On small screens (iPhone SE, etc.), use even smaller font and padding */
+    @media (min-width: 375px) {
+      #submitChangesBtn,
+      #releaseOrderBtn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem; /* 13px */
+      }
+    }
+    
+    /* On medium screens, allow buttons to be slightly wider */
     @media (min-width: 480px) {
+      #submitChangesBtn,
+      #releaseOrderBtn {
+        min-width: 120px;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem; /* 14px */
+      }
+    }
+    
+    /* On larger screens, allow buttons to be even wider */
+    @media (min-width: 768px) {
       #submitChangesBtn,
       #releaseOrderBtn {
         min-width: 140px;
         padding: 0.5rem 1.25rem;
-        font-size: 0.9375rem;
+        font-size: 0.9375rem; /* 15px */
       }
     }
     

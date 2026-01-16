@@ -205,6 +205,12 @@ async function authenticate() {
     if (authSection) {
       authSection.style.display = 'block';
     }
+    // Update main title to "SCP Mobile" on auth screen
+    const mainTitle = document.getElementById('mainTitle');
+    if (mainTitle) {
+      mainTitle.textContent = 'SCP Mobile';
+      mainTitle.style.display = 'block';
+    }
     return false;
   }
 
@@ -222,6 +228,13 @@ async function authenticate() {
   if (storeIdSection) {
     storeIdSection.style.display = 'block';
     storeIdInput?.focus();
+  }
+  
+  // Update main title to "SCP Mobile" on store entry screen
+  const mainTitle = document.getElementById('mainTitle');
+  if (mainTitle) {
+    mainTitle.textContent = 'SCP Mobile';
+    mainTitle.style.display = 'block';
   }
   
   // Show logo on Store prompt page
@@ -754,6 +767,7 @@ function handleChangeStore() {
   // Hide store header cards, show main title
   const mainTitle = document.getElementById('mainTitle');
   if (mainTitle) {
+    mainTitle.textContent = 'SCP Mobile';
     mainTitle.style.display = 'block';
   }
   const storeHeaderCards = document.getElementById('storeHeaderCards');
@@ -1931,6 +1945,7 @@ window.addEventListener('load', async () => {
     // Show main title, hide store header
     const mainTitle = document.getElementById('mainTitle');
     if (mainTitle) {
+      mainTitle.textContent = 'SCP Mobile';
       mainTitle.style.display = 'block';
     }
     const storeHeaderCards = document.getElementById('storeHeaderCards');
