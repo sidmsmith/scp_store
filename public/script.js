@@ -802,6 +802,11 @@ if (backToCardsBtn) {
       if (cardsHeaderDepartment) {
         cardsHeaderDepartment.textContent = 'N/A';
       }
+      
+      // Show logo when returning to cards page
+      if (logoContainer) {
+        logoContainer.style.display = 'block';
+      }
     
     // Removed: status('', 'info'); // Clear status messages
   });
