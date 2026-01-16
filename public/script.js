@@ -2402,10 +2402,13 @@ if (submitChangesBtn) {
     const totalUpdated = totalSuccess;
     showSubmissionModal(totalUpdated, totalErrors);
     
-    // Re-enable Release Order button after successful submission (check if no errors or if all updates succeeded)
+    // Re-enable Release Order button after successful submission (only if all updates succeeded)
     if (totalErrors === 0) {
       checkPendingChanges(); // This will re-enable the button since quantities match now
-      
+    }
+    
+    // Refresh pages if ANY updates were successful (regardless of errors)
+    if (totalSuccess > 0) {
       // Refresh order status by calling search API again if we're on the Suggested Orders page
       if (suggestedOrdersSection && suggestedOrdersSection.style.display !== 'none') {
         // Check if we're currently viewing the orders page
@@ -2586,7 +2589,7 @@ if (submitChangesBtn) {
           }
         }
       }
-    }
+    } // End if (totalSuccess > 0)
   });
 }
 
