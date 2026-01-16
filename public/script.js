@@ -1209,8 +1209,9 @@ async function loadOpportunityBuysCards() {
           OnHandQuantity: inventoryMovement?.OnHandQuantity || '',
           PeriodForecast: inventoryMovement?.PeriodForecast || '',
           InventoryMovementId: inventoryMovement?.InventoryMovementId || '',
-          // Store PlannedPurchaseId for reference (not displayed but may be needed for updates)
+          // Store PlannedPurchaseId and PlannedPurchaseName for display
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
+          PlannedPurchaseName: plannedPurchase.PlannedPurchaseName || '',
           // Flag to indicate this is an Opportunity Buy item (for different label)
           isOpportunityBuy: true
         };
@@ -1230,6 +1231,7 @@ async function loadOpportunityBuysCards() {
           PeriodForecast: '',
           InventoryMovementId: '',
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
+          PlannedPurchaseName: plannedPurchase.PlannedPurchaseName || '',
           isOpportunityBuy: true
         });
       }
@@ -1319,6 +1321,7 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     // Extract item details
     const itemId = item.ItemId || `Item ${index + 1}`;
     const itemDescription = item.InventoryMovementDetail?.ItemDescription || '';
+    const plannedPurchaseName = item.PlannedPurchaseName || 'Opportunity Buy';
     const purchaseQuantity = item.FinalOrderUnits || ''; // This is PurchaseQuantity from PlannedPurchase
     const onHandQuantity = item.OnHandQuantity ?? ''; // Use nullish coalescing to preserve 0
     const periodForecast = item.PeriodForecast ?? ''; // Use nullish coalescing to preserve 0
@@ -1342,8 +1345,10 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
           ${imageHtml}
         </div>
         <div class="item-card-center">
-          <div class="item-card-title" style="text-align: left;">${itemId} - ${itemDescription || 'No Description'}</div>
+          <div class="item-card-title" style="text-align: left;">${plannedPurchaseName}</div>
           <div class="item-card-details">
+            <div class="item-detail-line">Item: ${itemId}</div>
+            ${itemDescription ? `<div class="item-detail-line">Description: ${itemDescription}</div>` : ''}
             ${purchaseQuantity !== '' ? `<div class="item-detail-line">Purchase Qty: ${formatNumber(purchaseQuantity)}</div>` : ''}
             <div class="item-detail-line">On Hand: ${formatNumber(onHandQuantity !== '' ? onHandQuantity : 0)}</div>
             <div class="item-detail-line">Forecast: ${formatForecast(periodForecast !== '' ? periodForecast : 0)}</div>
