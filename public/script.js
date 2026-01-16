@@ -791,11 +791,11 @@ function renderOrderCards(orders) {
         logToConsole(JSON.stringify(res, null, 2), res.success ? 'success' : 'error');
         logToConsole('=== End API Call ===\n', 'info');
         
-        // Show console section when API is called
-        if (consoleSection) {
+        // Show console section when API is called (unless Console=N)
+        if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
           consoleSection.style.display = 'block';
         }
-        if (consoleToggleContainer) {
+        if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
           consoleToggleContainer.style.display = 'block';
         }
         
@@ -1672,6 +1672,10 @@ window.addEventListener('load', async () => {
 // Console toggle functionality
 if (consoleToggleBtn) {
   consoleToggleBtn.addEventListener('click', () => {
+    // Don't toggle console if Console=N is set
+    if (urlConsole && urlConsole.toUpperCase() === 'N') {
+      return;
+    }
     if (consoleSection) {
       const isHidden = consoleSection.style.display === 'none' || !consoleSection.style.display;
       consoleSection.style.display = isHidden ? 'block' : 'none';
