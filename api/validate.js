@@ -246,6 +246,275 @@ export default async function handler(req, res) {
     }
   }
 
+  // === SEARCH LOCATION ===
+  if (action === 'search-location') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { storeId } = req.body;
+    if (!storeId) {
+      return res.json({ success: false, error: "No storeId provided" });
+    }
+
+    try {
+      const searchPayload = {
+        Query: `LocationId IN ('${storeId}')`
+      };
+      const result = await apiCall('POST', '/itemlocation/api/itemlocation/location/search', token, org, searchPayload);
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      const locations = result.data || [];
+      return res.json({ success: true, locations });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH INVENTORY MOVEMENT SUMMARY ===
+  if (action === 'search-inventory-movement-summary') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { storeId } = req.body;
+    if (!storeId) {
+      return res.json({ success: false, error: "No storeId provided" });
+    }
+
+    try {
+      const searchPayload = {
+        Query: `LocationId='${storeId}'`,
+        Template: {
+          LocationId: null,
+          SourceLocationId: null,
+          SubGroup: null,
+          InventoryMovementSummaryId: null,
+          OrderStatus: {
+            OrderStatusId: null
+          },
+          MovementSummaryFactors: null
+        }
+      };
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search', token, org, searchPayload);
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      const orders = result.data || [];
+      return res.json({ success: true, orders });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH INVENTORY MOVEMENT ===
+  if (action === 'search-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { sourceLocationId, locationId, itemId } = req.body;
+    if (!sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "sourceLocationId and locationId required" });
+    }
+
+    try {
+      let query = `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`;
+      if (itemId) {
+        query = `ItemId='${itemId}' AND LocationId='${locationId}'`;
+      }
+      const searchPayload = {
+        Query: query,
+        Template: {
+          ItemId: null,
+          InventoryMovementId: null,
+          InventoryMovementDetail: {
+            ItemDescription: null
+          },
+          FinalOrderUnits: null,
+          FinalOrderCost: null,
+          OnHandQuantity: null,
+          PeriodForecast: null
+        }
+      };
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/search', token, org, searchPayload);
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      const movements = result.data || [];
+      return res.json({ success: true, movements });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH ITEM IMAGES ===
+  if (action === 'search-item-images') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.json({ success: false, error: "No itemIds provided" });
+    }
+
+    try {
+      const searchPayload = {
+        Query: `ItemId IN (${itemIds.map(id => `'${id}'`).join(',')})`,
+        Template: {
+          ItemId: null,
+          SmallImageURI: null
+        }
+      };
+      const result = await apiCall('POST', '/item/api/item/item/search', token, org, searchPayload);
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      const items = result.data || [];
+      const imageMap = {};
+      items.forEach(item => {
+        if (item.ItemId && item.SmallImageURI) {
+          imageMap[item.ItemId] = item.SmallImageURI;
+        }
+      });
+      return res.json({ success: true, imageMap });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SEARCH PLANNED PURCHASE ===
+  if (action === 'search-planned-purchase') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { locationId } = req.body;
+    if (!locationId) {
+      return res.json({ success: false, error: "No locationId provided" });
+    }
+
+    try {
+      const searchPayload = {
+        Query: `LocationId IN ('${locationId}')`,
+        Template: {
+          PlannedPurchaseId: null,
+          PlannedPurchaseName: null,
+          LocationId: null,
+          ItemId: null,
+          PurchaseQuantity: null,
+          PlannedReceiptDate: null,
+          PurchaseOnDate: null,
+          DaysOfSupply: null,
+          PK: null
+        }
+      };
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/search', token, org, searchPayload);
+      if (result.error) {
+        return res.json({ success: false, error: result.error });
+      }
+      const plannedPurchases = result.data || [];
+      return res.json({ success: true, plannedPurchases });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === REVIEW INVENTORY MOVEMENT ===
+  if (action === 'review-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { sourceLocationId, locationId } = req.body;
+    if (!sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "sourceLocationId and locationId required" });
+    }
+
+    try {
+      const reviewPayload = {
+        ItemId: null,
+        SourceLocationId: sourceLocationId,
+        LocationId: locationId,
+        RelationType: "Regular",
+        BracketId: null,
+        executeBracket: false,
+        CancelReview: false,
+        StartReview: true,
+        UseLatest: false
+      };
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review', token, org, reviewPayload);
+      return res.json({ success: result.error ? false : true, result });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === SAVE SUGGESTED ORDER LINE ===
+  if (action === 'save-suggested-order-line') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { inventoryMovementId, finalOrderQty } = req.body;
+    if (!inventoryMovementId || finalOrderQty === undefined) {
+      return res.json({ success: false, error: "inventoryMovementId and finalOrderQty required" });
+    }
+
+    try {
+      const updatePayload = {
+        InventoryMovementId: inventoryMovementId,
+        FinalOrderUnits: finalOrderQty
+      };
+      const result = await apiCall('PUT', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save', token, org, updatePayload);
+      return res.json({ success: result.error ? false : true, result });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === CLEAR SOQ ===
+  if (action === 'clear-soq') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { itemId, sourceLocationId, locationId } = req.body;
+    if (!itemId || !sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "itemId, sourceLocationId, and locationId required" });
+    }
+
+    try {
+      const clearPayload = {
+        ItemId: itemId,
+        SourceLocationId: sourceLocationId,
+        LocationId: locationId,
+        FinalOrderUnits: 0
+      };
+      const result = await apiCall('PUT', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovement/save', token, org, clearPayload);
+      return res.json({ success: result.error ? false : true, result });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
+  // === APPROVE INVENTORY MOVEMENT ===
+  if (action === 'approve-inventory-movement') {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+    
+    const { sourceLocationId, locationId } = req.body;
+    if (!sourceLocationId || !locationId) {
+      return res.json({ success: false, error: "sourceLocationId and locationId required" });
+    }
+
+    try {
+      const approvePayload = {
+        LocationId: locationId,
+        SourceLocationId: sourceLocationId,
+        RelationType: "Regular"
+      };
+      const result = await apiCall('POST', '/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve', token, org, approvePayload);
+      return res.json({ success: result.error ? false : true, result });
+    } catch (error) {
+      return res.json({ success: false, error: error.message });
+    }
+  }
+
   // Unknown action
   return res.status(400).json({ error: "Unknown action" });
 }
