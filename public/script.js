@@ -285,7 +285,7 @@ async function submitStoreId() {
     return false;
   }
   
-  status('Store validated, loading data...', 'info');
+  // Removed: status('Store validated, loading data...', 'info');
   storeId = storeIdValue;
   
   // Track store ID entered
@@ -322,7 +322,7 @@ async function submitStoreId() {
       cardsHeaderStoreId.textContent = storeIdValue;
     }
   
-  status('Store loaded', 'success');
+  // Removed: status('Store loaded', 'success');
   return true;
 }
 
@@ -539,7 +539,7 @@ function startBarcodeScanner() {
           if (scannerModal) {
             scannerModal.hide();
           }
-          status(`Barcode scanned: ${code}`, 'success');
+          // Removed: status(`Barcode scanned: ${code}`, 'success');
         }, 500);
       } else {
         // Show progress
@@ -949,7 +949,7 @@ function renderOrderCards(orders) {
         return;
       }
       
-      status('Loading order items...', 'info');
+      // Removed: status('Loading order items...', 'info');
       
       // Hide orders section, show movements section
       if (suggestedOrdersSection) {
@@ -1404,7 +1404,7 @@ if (submitChangesBtn) {
       return;
     }
     
-    status('Submitting changes...', 'info');
+    // Removed: status('Submitting changes...', 'info');
     logToConsole(`\n=== Submitting ${updates.length} item update(s) ===`, 'info');
     
     // Filter updates: process items with qty > 0 first, then qty = 0
@@ -1561,7 +1561,7 @@ if (submitChangesBtn) {
         const isOrdersPageVisible = suggestedOrdersSection.style.display === 'block';
         
         if (isOrdersPageVisible && storeId) {
-          status('Refreshing order status...', 'info');
+          // Removed: status('Refreshing order status...', 'info');
           logToConsole(`\n=== Refreshing Order Status ===`, 'info');
           
           try {
@@ -1625,7 +1625,7 @@ if (releaseOrderBtn) {
       return;
     }
     
-    status('Releasing order...', 'info');
+    // Removed: status('Releasing order...', 'info');
     logToConsole(`\n=== Release Order ===`, 'info');
     logToConsole(`Action: approve-inventory-movement`, 'info');
     logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve`, 'info');
@@ -1753,7 +1753,7 @@ function showReleaseOrderModal(success, message) {
       
       // Refresh the Suggested Orders by calling the API again
       if (storeId) {
-        status('Refreshing orders...', 'info');
+          // Removed: status('Refreshing orders...', 'info');
         logToConsole(`\n=== Refreshing Orders After Release ===`, 'info');
         
         try {
@@ -2637,7 +2637,7 @@ if (uploadForecastBtn) {
     }
     
     logToConsole(`Starting forecast upload for ${forecastFileData.length} items...`, 'info');
-    status('Uploading forecasts...', 'info');
+    // Removed: status('Uploading forecasts...', 'info');
     
     // Track upload attempt
     const forecastFileName = forecastFileDisplay ? forecastFileDisplay.value : 'unknown';
@@ -2846,7 +2846,7 @@ if (uploadLocationsBtn) {
     }
     
     logToConsole(`Starting location upload for ${locationFileData.length} locations...`, 'info');
-    status('Uploading locations...', 'info');
+    // Removed: status('Uploading locations...', 'info');
     
     // Track upload attempt
     const locationFileName = locationFileDisplay ? locationFileDisplay.value : 'unknown';
