@@ -834,6 +834,12 @@ if (backToOrdersBtn) {
       mainTitle.style.display = 'none';
     }
     
+    // Show storeHeaderCards on Suggested Orders page (Store and Department)
+    const storeHeaderCards = document.getElementById('storeHeaderCards');
+    if (storeHeaderCards && storeId) {
+      storeHeaderCards.style.display = 'block';
+    }
+    
     // Removed: status('', 'info'); // Clear status messages
   });
 }
@@ -974,11 +980,7 @@ function renderOrderCards(orders) {
         inventoryMovementSection.style.display = 'block';
       }
       
-      // Hide storeHeaderCards on Items page (Department/Status shown in itemsHeaderContainer)
-      const storeHeaderCards = document.getElementById('storeHeaderCards');
-      if (storeHeaderCards) {
-        storeHeaderCards.style.display = 'none';
-      }
+      // Keep storeHeaderCards visible on Items page (shows Store and Department)
       
       // Keep main title hidden when showing items
       const mainTitle = document.getElementById('mainTitle');
