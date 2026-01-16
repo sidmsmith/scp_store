@@ -607,6 +607,19 @@
       }
     }
     
+    /* Mobile: Left-justify Department and Status text to avoid button overlap */
+    @media (max-width: 767px) {
+      .department-header-row {
+        text-align: left !important;
+        padding-right: 140px; /* Add padding to prevent text from going under button */
+      }
+      
+      .status-header-row {
+        text-align: left !important;
+        padding-right: 100px; /* Add padding to prevent text from going under button */
+      }
+    }
+    
     /* Orders Container - Scrollable */
     .orders-container {
       flex: 1;
@@ -1086,7 +1099,7 @@
         <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 0.25rem;">
           <span>Store: <span id="cardsHeaderStoreId"></span></span>
         </div>
-        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; position: relative;">
+        <div class="department-header-row" style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; position: relative;">
           <span>Department: <span id="cardsHeaderDepartment"></span></span>
           <button class="btn btn-sm btn-outline-secondary" id="changeStoreBtnCards" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
             <i class="fas fa-arrow-left"></i> Change Store
@@ -1159,7 +1172,7 @@
       <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
         <!-- Header with Order Status - displayed via itemsHeaderContainer -->
         <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center; position: relative;">
-          <div style="font-size: 1.125rem; font-weight: 600; color: var(--text); position: relative;">
+          <div class="status-header-row" style="font-size: 1.125rem; font-weight: 600; color: var(--text); position: relative;">
             <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
             <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
               <i class="fas fa-arrow-left"></i> Back
