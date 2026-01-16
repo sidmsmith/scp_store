@@ -1220,17 +1220,39 @@ async function loadOpportunityBuysCards() {
           ? inventoryMovementRes.movements[0] 
           : null;
         
+        // Log Description and Forecast data extraction for debugging
+        logToConsole(`\n=== Data Extraction for ItemId: ${itemId} ===`, 'info');
+        logToConsole(`Raw inventoryMovement object:`, 'info');
+        logToConsole(JSON.stringify(inventoryMovement, null, 2), inventoryMovement ? 'info' : 'warning');
+        
+        const rawDescription = inventoryMovement?.InventoryMovementDetail?.ItemDescription;
+        const rawForecast = inventoryMovement?.PeriodForecast;
+        
+        logToConsole(`Raw ItemDescription from API: ${JSON.stringify(rawDescription)}`, rawDescription ? 'info' : 'warning');
+        logToConsole(`Raw PeriodForecast from API: ${JSON.stringify(rawForecast)}`, rawForecast !== null && rawForecast !== undefined ? 'info' : 'warning');
+        logToConsole(`ItemDescription type: ${typeof rawDescription}`, 'info');
+        logToConsole(`PeriodForecast type: ${typeof rawForecast}`, 'info');
+        
+        // Extract Description
+        const extractedDescription = rawDescription || '';
+        logToConsole(`Extracted ItemDescription (after || ''): ${JSON.stringify(extractedDescription)}`, 'info');
+        
+        // Extract Forecast
+        const extractedForecast = rawForecast ?? '';
+        logToConsole(`Extracted PeriodForecast (after ?? ''): ${JSON.stringify(extractedForecast)}`, 'info');
+        logToConsole(`=== End Data Extraction for ItemId: ${itemId} ===\n`, 'info');
+        
         // Combine PlannedPurchase and inventoryMovement data into format expected by renderOpportunityBuysCards
         const combinedItem = {
           ItemId: itemId,
           InventoryMovementDetail: {
-            ItemDescription: inventoryMovement?.InventoryMovementDetail?.ItemDescription || ''
+            ItemDescription: extractedDescription
           },
           // Use PurchaseQuantity as FinalOrderUnits for display (will show as "Purchase Qty" in card)
           FinalOrderUnits: plannedPurchase.PurchaseQuantity || '',
           FinalOrderCost: null, // Not provided for Opportunity Buys
           OnHandQuantity: inventoryMovement?.OnHandQuantity ?? '',
-          PeriodForecast: inventoryMovement?.PeriodForecast ?? '',
+          PeriodForecast: extractedForecast,
           InventoryMovementId: inventoryMovement?.InventoryMovementId || '',
           // Store PlannedPurchaseId, PlannedPurchaseName, and PK for API calls
           PlannedPurchaseId: plannedPurchase.PlannedPurchaseId || null,
@@ -1239,6 +1261,10 @@ async function loadOpportunityBuysCards() {
           // Flag to indicate this is an Opportunity Buy item (for different label)
           isOpportunityBuy: true
         };
+        
+        logToConsole(`Combined item object for ItemId ${itemId}:`, 'info');
+        logToConsole(`  ItemDescription: ${JSON.stringify(combinedItem.InventoryMovementDetail.ItemDescription)}`, 'info');
+        logToConsole(`  PeriodForecast: ${JSON.stringify(combinedItem.PeriodForecast)}`, 'info');
         
         combinedItems.push(combinedItem);
       } catch (error) {
@@ -1345,14 +1371,32 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     
     // Extract item details
     const itemId = item.ItemId || `Item ${index + 1}`;
-    const itemDescription = item.InventoryMovementDetail?.ItemDescription || '';
+    
+    // Log Description and Forecast extraction in render function
+    logToConsole(`\n=== Rendering Item ${index + 1} (ItemId: ${itemId}) ===`, 'info');
+    logToConsole(`Raw item object:`, 'info');
+    logToConsole(JSON.stringify(item, null, 2), 'info');
+    
+    const rawItemDescription = item.InventoryMovementDetail?.ItemDescription;
+    const rawItemForecast = item.PeriodForecast;
+    
+    logToConsole(`Raw ItemDescription from item object: ${JSON.stringify(rawItemDescription)}`, rawItemDescription ? 'info' : 'warning');
+    logToConsole(`Raw PeriodForecast from item object: ${JSON.stringify(rawItemForecast)}`, rawItemForecast !== null && rawItemForecast !== undefined ? 'info' : 'warning');
+    
+    const itemDescription = rawItemDescription || '';
     const plannedPurchaseName = item.PlannedPurchaseName || 'Opportunity Buy';
     const purchaseQuantity = item.FinalOrderUnits || ''; // This is PurchaseQuantity from PlannedPurchase
     const onHandQuantity = item.OnHandQuantity ?? ''; // Use nullish coalescing to preserve 0
+    
     // Extract PeriodForecast, preserving 0 but defaulting to 0 if null/undefined/empty
-    const periodForecast = (item.PeriodForecast !== null && item.PeriodForecast !== undefined && item.PeriodForecast !== '') 
-      ? item.PeriodForecast 
+    const periodForecast = (rawItemForecast !== null && rawItemForecast !== undefined && rawItemForecast !== '') 
+      ? rawItemForecast 
       : 0;
+    
+    logToConsole(`Extracted itemDescription (after || ''): ${JSON.stringify(itemDescription)}`, 'info');
+    logToConsole(`Extracted periodForecast (after condition): ${JSON.stringify(periodForecast)}`, 'info');
+    logToConsole(`Formatted forecast (formatForecast result): ${formatForecast(periodForecast)}`, 'info');
+    logToConsole(`=== End Rendering Item ${index + 1} ===\n`, 'info');
     
     // Initialize quantity from PurchaseQuantity
     const initialQuantity = purchaseQuantity !== '' ? parseFloat(purchaseQuantity) : 0;
