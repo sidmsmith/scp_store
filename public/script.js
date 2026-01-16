@@ -1579,6 +1579,16 @@ window.addEventListener('load', async () => {
     // Silently fail - don't interrupt user experience
   }
   
+  // Hide console if Console=N parameter is provided
+  if (urlConsole && urlConsole.toUpperCase() === 'N') {
+    if (consoleSection) {
+      consoleSection.style.display = 'none';
+    }
+    if (consoleToggleContainer) {
+      consoleToggleContainer.style.display = 'none';
+    }
+  }
+  
   // Auto-authenticate if Organization or ORG parameter is provided in URL
   if (urlOrg) {
     // Auth section already hidden when URL parameter is present
@@ -1599,11 +1609,24 @@ window.addEventListener('load', async () => {
       if (logoContainer) {
         logoContainer.style.display = 'none';
       }
-      if (consoleSection) {
+      if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
         consoleSection.style.display = 'none';
       }
-      if (consoleToggleContainer) {
+      if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
         consoleToggleContainer.style.display = 'none';
+      }
+      orgInput?.focus();
+    } else if (urlStore) {
+      // Auto-validate store if Store parameter is present
+      if (storeIdInput) {
+        storeIdInput.value = urlStore.trim();
+        storeId = urlStore.trim();
+        
+        // Validate and load store
+        const storeValidated = await submitStoreId();
+        if (!storeValidated) {
+          status('Invalid Store', 'error');
+        }
       }
     }
   } else {
@@ -1632,10 +1655,10 @@ window.addEventListener('load', async () => {
     if (logoContainer) {
       logoContainer.style.display = 'none';
     }
-    if (consoleSection) {
+    if (consoleSection && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
       consoleSection.style.display = 'none';
     }
-    if (consoleToggleContainer) {
+    if (consoleToggleContainer && (!urlConsole || urlConsole.toUpperCase() !== 'N')) {
       consoleToggleContainer.style.display = 'none';
     }
     orgInput?.focus();

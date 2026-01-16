@@ -400,17 +400,10 @@
     .option-card-icon {
       width: 36px;
       height: 36px;
-      background: #d3d3d3;
-      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-    }
-    
-    /* Light theme: Lighter icon background */
-    :root.theme-light .option-card-icon {
-      background: #e8e8e8;
     }
     
     /* Responsive icon sizing */
@@ -922,14 +915,18 @@
       <!-- Cards Section -->
       <div id="cardsSection" class="cards-section" style="display:none;">
         <div class="option-card" id="suggestedOrdersCard">
-          <div class="option-card-icon"></div>
+          <div class="option-card-icon">
+            <i class="fas fa-clipboard-list" style="color: var(--primary); font-size: 1.5rem;"></i>
+          </div>
           <div class="option-card-text">Suggested Orders</div>
           <div class="option-card-arrow">
             <i class="fas fa-chevron-right"></i>
           </div>
         </div>
         <div class="option-card" id="opportunityBuysCard">
-          <div class="option-card-icon"></div>
+          <div class="option-card-icon">
+            <i class="fas fa-tags" style="color: var(--primary); font-size: 1.5rem;"></i>
+          </div>
           <div class="option-card-text">Opportunity Buys</div>
           <div class="option-card-arrow">
             <i class="fas fa-chevron-right"></i>
