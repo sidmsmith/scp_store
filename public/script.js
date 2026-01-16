@@ -734,7 +734,6 @@ if (opportunityBuysCard) {
 }
 
 // Change Store button handlers (allows changing store)
-const backToStoreBtn = document.getElementById('backToStoreBtn');
 const changeStoreBtnCards = document.getElementById('changeStoreBtnCards');
 
 function handleChangeStore() {
@@ -777,10 +776,7 @@ function handleChangeStore() {
   });
 }
 
-// Attach change store handler to both buttons
-if (backToStoreBtn) {
-  backToStoreBtn.addEventListener('click', handleChangeStore);
-}
+// Attach change store handler to button on Main Cards page
 if (changeStoreBtnCards) {
   changeStoreBtnCards.addEventListener('click', handleChangeStore);
 }
