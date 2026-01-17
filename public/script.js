@@ -1786,13 +1786,15 @@ function renderOrderCards(orders) {
           itemsHeaderContainer.style.display = 'block';
         }
         
-        // Set Source location
-        if (itemsHeaderSource) {
+        // Show Source and Order Status parent divs (they may have been hidden for Opportunity Buys)
+        if (itemsHeaderSource && itemsHeaderSource.parentElement) {
+          itemsHeaderSource.parentElement.style.display = 'block';
           itemsHeaderSource.textContent = sourceLocationId || 'N/A';
         }
         
         // Get Order Status from the order (from data attribute or variable)
-        if (itemsHeaderOrderStatus) {
+        if (itemsHeaderOrderStatus && itemsHeaderOrderStatus.parentElement) {
+          itemsHeaderOrderStatus.parentElement.style.display = 'block';
           const orderStatusValue = orderCard.getAttribute('data-order-status') || orderStatus || 'N/A';
           itemsHeaderOrderStatus.textContent = orderStatusValue;
         }
