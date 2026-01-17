@@ -1,5 +1,36 @@
 # Changelog
 
+## Version 1.3.1
+
+### UI/UX Improvements
+
+#### Update Button State Management
+- **Initially Disabled:**
+  - Update button now starts greyed out and disabled on both Opportunity Buys and Suggested Orders Item pages
+  - Button becomes enabled only when quantity changes are detected
+  - Button automatically disables again if all quantities revert to initial values
+  - Provides clear visual feedback about when changes can be submitted
+
+- **Dynamic State Updates:**
+  - Button state is checked after initial card rendering
+  - Button state updates automatically when any quantity is changed (increase, decrease, or remove)
+  - Uses same `checkPendingChanges()` function that manages Release Order button state
+  - Improved user experience by preventing accidental submissions
+
+#### Grammar Improvements
+- **Modal Message Grammar:**
+  - Fixed singular/plural grammar in submission modal messages
+  - Correctly displays "line" (singular) when count is 1, "lines" (plural) when count > 1
+  - Correctly displays "error" (singular) when count is 1, "errors" (plural) when count > 1
+  - Examples: "Successfully updated 1 line" vs "Successfully updated 5 lines"
+
+### Technical Changes
+- Updated `checkPendingChanges()` function to manage Update button state (not just Release Order button)
+- Added `checkPendingChanges()` calls after card rendering to ensure initial button state
+- Enhanced `showSubmissionModal()` with singular/plural logic for better grammar
+
+---
+
 ## Version 1.3.0
 
 ### Major Features
