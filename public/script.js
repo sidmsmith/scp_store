@@ -724,6 +724,15 @@ if (suggestedOrdersCard) {
       suggestedOrdersSection.style.display = 'block';
     }
     
+    // Hide inventory movement section and itemsHeaderContainer to prevent whitespace
+    if (inventoryMovementSection) {
+      inventoryMovementSection.style.display = 'none';
+    }
+    const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+    if (itemsHeaderContainer) {
+      itemsHeaderContainer.style.display = 'none';
+    }
+    
     // Show back to cards button when viewing Suggested Orders
     if (backToCardsBtn) {
       backToCardsBtn.style.display = 'block';
@@ -733,6 +742,12 @@ if (suggestedOrdersCard) {
     const mainTitle = document.getElementById('mainTitle');
     if (mainTitle) {
       mainTitle.style.display = 'none';
+    }
+    
+    // Explicitly show storeHeaderCards (Store and Department) on Suggested Orders page
+    const storeHeaderCards = document.getElementById('storeHeaderCards');
+    if (storeHeaderCards && storeId) {
+      storeHeaderCards.style.display = 'block';
     }
     
     // Clear header values initially
@@ -904,6 +919,12 @@ if (backToOrdersBtn) {
         suggestedOrdersSection.style.display = 'none';
       }
       
+      // Hide itemsHeaderContainer to prevent whitespace
+      const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+      if (itemsHeaderContainer) {
+        itemsHeaderContainer.style.display = 'none';
+      }
+      
       // Hide store header cards, show main title
       const mainTitle = document.getElementById('mainTitle');
       if (mainTitle) {
@@ -928,6 +949,12 @@ if (backToOrdersBtn) {
       // Coming from Suggested Orders Items page, go back to Suggested Orders page
       if (suggestedOrdersSection) {
         suggestedOrdersSection.style.display = 'block';
+      }
+      
+      // Hide itemsHeaderContainer when returning to Suggested Orders page (not needed there)
+      const itemsHeaderContainer = document.getElementById('itemsHeaderContainer');
+      if (itemsHeaderContainer) {
+        itemsHeaderContainer.style.display = 'none';
       }
       
       // Keep main title hidden when showing orders
