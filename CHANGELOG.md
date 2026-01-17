@@ -1,5 +1,51 @@
 # Changelog
 
+## Version 1.3.0
+
+### Major Features
+
+#### Barcode/QR Code Scanner Solution
+- **QR Code Support Added:**
+  - Replaced Quagga (1D barcodes only) with html5-qrcode library (v2.3.8)
+  - Now supports both QR codes and traditional barcodes (Code 128, Code 39, EAN, UPC, etc.)
+  - Improved QR code detection reliability
+  
+- **Consistency Validation:**
+  - Added consistency check to prevent false positive scans
+  - Requires same code to be detected 3 times before accepting
+  - Prevents random numbers/noise from being accepted immediately
+  - Shows progress feedback: "Detected: CODE (1/3) - Keep steady..."
+  
+- **Auto-Submit Functionality:**
+  - After successful scan, automatically submits Store ID (simulates Enter key press)
+  - User no longer needs to manually press Enter after scanning
+  - 300ms delay after modal closes ensures clean submission
+  - Fully automated scanning workflow
+
+- **UI Improvements:**
+  - Removed "Stop Scanner" button (simplified interface)
+  - Scanner now only has "Cancel" button
+  - Improved status messages showing scan progress
+
+- **Validation Enhancements:**
+  - Minimum 3 character length requirement
+  - Alphanumeric, hyphen, underscore, colon character validation
+  - 500ms debounce to prevent rapid successive scans
+  - Invalid codes are rejected with console warnings
+
+#### Bug Fixes
+- Fixed ReferenceError: `uploadForecastBtn is not defined`
+  - Added variable definitions for `uploadForecastBtn` and `uploadLocationBtn`
+  - Prevents errors when legacy button handlers check for removed buttons
+
+### Technical Changes
+- Migrated from QuaggaJS to html5-qrcode library
+- Added scan consistency tracking variables (`scanCount`, `lastScannedCode`)
+- Improved scanner state management and cleanup
+- Enhanced error handling for scanner initialization
+
+---
+
 ## Version 1.2.0
 
 ### Major Features
