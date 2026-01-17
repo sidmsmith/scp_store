@@ -1431,8 +1431,8 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     // Get image URL from imageMap, fallback to notfound.png
     const imageUrl = imageMap[itemId] || null;
     const imageHtml = imageUrl 
-      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='notfound.png'; this.onerror=null;" />`
-      : `<img src="notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
+      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='/notfound.png'; this.onerror=null;" />`
+      : `<img src="/notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
     
     // Get InventoryMovementId, PlannedPurchaseId, and PK (PK used for delete API)
     const inventoryMovementId = item.InventoryMovementId || '';
@@ -1918,8 +1918,8 @@ function renderMovementCards(movements, imageMap = {}) {
     // Get image URL from imageMap, fallback to notfound.png
     const imageUrl = imageMap[itemId] || null;
     const imageHtml = imageUrl 
-      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='notfound.png'; this.onerror=null;" />`
-      : `<img src="notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
+      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='/notfound.png'; this.onerror=null;" />`
+      : `<img src="/notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
     
     // Get InventoryMovementId (not displayed, but needed for updates)
     const inventoryMovementId = movement.InventoryMovementId || '';
