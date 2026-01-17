@@ -1373,13 +1373,23 @@ async function loadOpportunityBuysCards() {
       }
     }
 
+    // Step 4: Render cards using renderOpportunityBuysCards (shows items with images and pills)
+    renderOpportunityBuysCards(combinedItems, imageMap);
+    
     // Show Update button when items are loaded
     if (submitChangesBtn && combinedItems.length > 0) {
       submitChangesBtn.style.display = 'block';
+      // Initially disable Update button since no changes have been made yet
+      // This will be enabled automatically when quantities change (via checkPendingChanges)
+      if (typeof checkPendingChanges === 'function') {
+        checkPendingChanges();
+      } else {
+        // Fallback: manually disable if function doesn't exist yet
+        submitChangesBtn.disabled = true;
+        submitChangesBtn.style.opacity = '0.5';
+        submitChangesBtn.style.cursor = 'not-allowed';
+      }
     }
-
-    // Step 4: Render cards using renderOpportunityBuysCards (shows items with images and pills)
-    renderOpportunityBuysCards(combinedItems, imageMap);
     
   } catch (error) {
     if (movementsLoading) {
@@ -1560,6 +1570,11 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     
     movementsContainer.appendChild(itemCard);
   });
+  
+  // Ensure Update button is disabled after initial render (no changes yet)
+  if (typeof checkPendingChanges === 'function') {
+    checkPendingChanges();
+  }
 }
 
 // Render order cards
@@ -1810,6 +1825,10 @@ function renderOrderCards(orders) {
         // Show submit and release order buttons when items are loaded
         if (submitChangesBtn && movements.length > 0) {
           submitChangesBtn.style.display = 'block';
+          // Initially disable Update button since no changes have been made yet
+          submitChangesBtn.disabled = true;
+          submitChangesBtn.style.opacity = '0.5';
+          submitChangesBtn.style.cursor = 'not-allowed';
         }
         if (releaseOrderBtn && movements.length > 0) {
           releaseOrderBtn.style.display = 'block';
@@ -2812,9 +2831,9 @@ if (releaseOrderBtn) {
   });
 }
 
-// Check for pending changes and update Release Order button state
+// Check for pending changes and update Update button and Release Order button state
 function checkPendingChanges() {
-  if (!movementsContainer || !releaseOrderBtn) return;
+  if (!movementsContainer) return;
   
   const itemCards = movementsContainer.querySelectorAll('.item-card');
   let hasPendingChanges = false;
@@ -2828,15 +2847,31 @@ function checkPendingChanges() {
     }
   });
   
-  // Disable Release Order button if there are pending changes
-  if (hasPendingChanges) {
-    releaseOrderBtn.disabled = true;
-    releaseOrderBtn.style.opacity = '0.5';
-    releaseOrderBtn.style.cursor = 'not-allowed';
-  } else {
-    releaseOrderBtn.disabled = false;
-    releaseOrderBtn.style.opacity = '1';
-    releaseOrderBtn.style.cursor = 'pointer';
+  // Update Update button state based on pending changes
+  // Enable if there are changes, disable if no changes
+  if (submitChangesBtn) {
+    if (hasPendingChanges) {
+      submitChangesBtn.disabled = false;
+      submitChangesBtn.style.opacity = '1';
+      submitChangesBtn.style.cursor = 'pointer';
+    } else {
+      submitChangesBtn.disabled = true;
+      submitChangesBtn.style.opacity = '0.5';
+      submitChangesBtn.style.cursor = 'not-allowed';
+    }
+  }
+  
+  // Disable Release Order button if there are pending changes (Suggested Orders only)
+  if (releaseOrderBtn) {
+    if (hasPendingChanges) {
+      releaseOrderBtn.disabled = true;
+      releaseOrderBtn.style.opacity = '0.5';
+      releaseOrderBtn.style.cursor = 'not-allowed';
+    } else {
+      releaseOrderBtn.disabled = false;
+      releaseOrderBtn.style.opacity = '1';
+      releaseOrderBtn.style.cursor = 'pointer';
+    }
   }
 }
 
