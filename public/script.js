@@ -73,6 +73,10 @@ const consoleToggleBtn = document.getElementById('consoleToggleBtn');
 const consoleToggleContainer = document.getElementById('consoleToggleContainer');
 const consoleCloseBtn = document.getElementById('consoleCloseBtn');
 
+// File display elements (may not exist in current HTML, but code references them)
+const forecastFileDisplay = document.getElementById('forecastFileDisplay');
+const locationFileDisplay = document.getElementById('locationFileDisplay');
+
 let storeId = null;
 
 // THEME DEFINITIONS
