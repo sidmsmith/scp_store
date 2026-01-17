@@ -1,131 +1,112 @@
-# SCP Store - Changelog
+# Changelog
 
-## Version 1.1.0 (Current)
+## Version 1.2.0
 
-### Major Features Added
+### Major Features
 
-#### 1. Barcode Scanner for Store ID
-- **Camera Icon Button**: Added camera icon button next to Store ID input field
-- **Mobile Camera Integration**: Opens phone camera for barcode scanning
-- **Multiple Barcode Format Support**: Supports Code 128, EAN, UPC, Code 39, Codabar, and more
-- **Smart Scanning**: 
-  - Confidence checking (minimum 40% confidence required)
-  - Consistency checking (requires same code scanned 2+ times)
-  - Debouncing to prevent rapid successive scans
-- **Auto-fill**: Automatically fills Store ID input with scanned value
-- **Error Handling**: Graceful handling of camera permissions and initialization errors
+#### Opportunity Buys Page
+- **Card Layout Improvements:**
+  - Display `PlannedPurchaseName` in card header (replaces Item and Description)
+  - Item and Description moved to details section in format "Item: XXX - Description"
+  - Always display "On Hand" (even if 0) and "Forecast" (even if 0)
+  - Forecast formatted to 2 decimal places (e.g., `10.34` or `0.00`)
+  
+- **Header Changes:**
+  - Hide "Department", "Source", and "Order Status" header fields on Opportunity Buys Item Page
+  - Store Header and Back button now properly displayed on Opportunity Buys Items page
 
-#### 2. Enhanced Order Submission Workflow
-- **Review API Integration**: New API call to review inventory movement before submission (only for "Suggested" orders)
-- **Clear SOQ API**: New endpoint for clearing suggested order quantity when quantity is set to 0
-- **Sequential Processing**: 
-  - Review API called once before item updates
-  - Items with quantity > 0 processed first
-  - Items with quantity = 0 processed after (clear SOQ)
-- **Submission Completion Modal**: Displays modal with number of updated lines after submission
-- **Auto-refresh**: Automatically refreshes Suggested Orders screen after successful submission
+- **API Updates:**
+  - Update button now uses two different APIs:
+    - If `qty > 0`: Calls `/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/save`
+    - If `qty = 0`: Calls DELETE `/ai-inventoryoptimization/api/ai-inventoryoptimization/plannedPurchase/{{PK}}`
+  - Search API now includes `PK` (primary key) in template for delete operations
+  - Page automatically refreshes after successful updates (1 second delay)
 
-#### 3. Release Order Functionality
-- **Release Order Button**: New button next to Submit Changes button
-- **Button States**: 
-  - Disabled/greyed out when there are pending item changes
-  - Enabled after successful submission
-- **Release API Integration**: Calls approve inventory movement API
-- **Post-Release Flow**: 
-  - Displays success/error modal
-  - Navigates back to Suggested Orders screen
-  - Auto-refreshes order list
+- **Data Display:**
+  - Fixed forecast display to pull from `PeriodForecast` field correctly
+  - Added detailed logging for Description and Forecast data extraction
 
-#### 4. Item Image Display
-- **Image API Integration**: Fetches item images from `/item/api/item/item/search`
-- **Dynamic Image Loading**: Displays actual item images on order item cards
-- **Graceful Fallback**: Falls back to placeholder if image fails to load
-- **Error Handling**: Handles image loading errors without breaking UI
+#### Suggested Orders Page
+- **Card Enhancements:**
+  - Renamed "Quantity" to "Order Qty" (always displayed, even if 0)
+  - Renamed "Price" to "Purchase Price" (displays as "$0.00" if no price)
+  - Always display "On Hand" (even if 0) and "Forecast" (even if 0)
+  - Forecast formatted to 2 decimal places (e.g., `10.34` or `0.00`)
+  - Cards and quantity pills initially greyed out if Order Qty is 0
 
-#### 5. URL Parameters Support
-- **Store Parameter**: Auto-validates store if `Store` parameter is present in URL
-- **Console Parameter**: Hides console window and button if `Console=N` is in URL
-- **Auto-authentication**: Supports `ORG` parameter for automatic authentication
-- **Cross-app Integration**: Enables seamless integration with other applications
+- **Header Improvements:**
+  - Source and Order Status fields now properly display on Suggested Orders Items page
+  - Store Header always displayed on Suggested Orders page (fixed navigation issue)
 
-#### 6. Store Validation
-- **Location Search API**: Validates store ID using `/itemlocation/api/itemlocation/location/search`
-- **Error Feedback**: Displays "Invalid Store" message if validation fails
-- **Prevents Invalid Entries**: Blocks submission with invalid store IDs
+- **API Updates:**
+  - Update API changed to `/aiui-facade/api/aiui-facade/view/save/com-manh-cp-aiui-facade/SuggestedOrderLine`
+  - Payload changed from `FinalOrderUnits` to `FinalOrderQty`
+  - Clear SOQ API updated to `/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ`
+  - Page automatically refreshes after successful updates (1 second delay)
+  - Refresh now occurs if ANY updates succeed (not just when all succeed)
 
-### UI/UX Improvements
+- **Search API Fix:**
+  - Fixed `search-inventory-movement` to support Opportunity Buys query format
+  - When `itemId` provided: Uses `ItemId='...' AND LocationId='...'` query
+  - When `itemId` not provided: Uses `SourceLocationId='...' AND LocationId='...'` query
 
-#### Header Reorganization
-- **Store Header**: Store and Department displayed in centered header
-- **Items Header**: Department and Order Status displayed in header (Department removed from duplicate location)
-- **Button Positioning**: 
-  - Desktop: Buttons inline with text on right side (doesn't affect centering)
-  - Mobile: Buttons in top-right corner of screen (viewport) with 10% width
-- **Consistent Labeling**: "Change Store" button renamed to "Back" for consistency
-- **Logo Display**: Manhattan logo now visible on ORG and Store prompt pages
+#### UI/UX Improvements
+- **Button Styling:**
+  - Update button changed to green (`btn-success`)
+  - Refresh icon repositioned to same vertical position as Back button
+  - Refresh and Back buttons have consistent responsive behavior on mobile
 
-#### Mobile Optimizations
-- **Responsive Button Layout**: Buttons positioned in top-right corner on mobile to prevent overlap
-- **Text Centering**: Header text centered independently of buttons
-- **Bottom Padding**: Increased padding on mobile for Items page to show full last card
-- **Scrollbar Fixes**: Eliminated page-level scrollbar, only card containers scroll
-- **Button Sizing**: 10% width buttons on mobile with min/max constraints
+- **Navigation:**
+  - Back button on Suggested Orders page now correctly returns to Main Cards page
+  - Fixed header display consistency across all navigation paths
+  - Proper header visibility management during page transitions
 
-#### Layout Improvements
-- **Flexbox Layout**: Implemented proper flexbox layout to prevent page scrolling
-- **Fixed Positioning**: Body set to `position: fixed` to eliminate page scrollbar
-- **Scrollable Containers**: Only cards/orders containers scroll, not entire page
-- **Status Messages**: 
-  - Removed all positive status messages (success/info)
-  - Only error messages displayed
-  - Messages cleared when navigating between pages
+- **Layout & Spacing:**
+  - Removed whitespace between Store Header and Suggested Order cards
+  - Added padding-top to card containers (0.5rem) to prevent cards being cut off on hover
+  - Consistent card positioning across all pages
 
-#### Button Layout
-- **Submit/Release Buttons**: 
-  - Optimized for mobile to fit on single line
-  - Reduced size and padding
-  - Color scheme: Submit = Blue, Release = Green
-- **Button States**: Release Order button disabled when pending changes exist
+- **Images:**
+  - Added `notfound.png` fallback image support
+  - When item image URL is not found, displays `notfound.png` from public folder
+  - Improved error handling for missing images
 
-### Technical Improvements
+#### API Validation
+- **Complete API Implementation:**
+  - Added all missing API action handlers in `api/validate.js`:
+    - `search-location`
+    - `search-inventory-movement-summary`
+    - `search-inventory-movement`
+    - `search-item-images`
+    - `review-inventory-movement`
+    - `save-suggested-order-line`
+    - `clear-soq`
+    - `approve-inventory-movement`
+    - `save-planned-purchase`
+    - `delete-planned-purchase`
 
-#### API Enhancements
-- **InventoryMovementId**: Added to inventory movement search API template
-- **New API Endpoints**:
-  - `/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/review`
-  - `/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/clearSOQ`
-  - `/ai-inventoryoptimization/api/ai-inventoryoptimization/inventorymovement/approve`
-  - `/item/api/item/item/search` (for item images)
-  - `/itemlocation/api/itemlocation/location/search` (for store validation)
+- **Enhanced Logging:**
+  - Added detailed API logging for Suggested Orders Update and Clear operations
+  - Includes Action name, Endpoint, Request Payload, Backend Payload, and full API Response
+  - Added detailed logging for Opportunity Buys Description and Forecast extraction
 
-#### Code Quality
-- **Error Handling**: Improved error handling throughout application
-- **State Management**: Better state management with data attributes
-- **Code Organization**: Cleaner code structure and organization
-- **Console Logging**: Comprehensive verbose logging for debugging
+#### Bug Fixes
+- Fixed JavaScript error: `forecastFileDisplay is not defined`
+- Fixed header fields not displaying after navigation from Opportunity Buys
+- Fixed whitespace issues on Suggested Orders page
+- Fixed Source and Order Status fields not displaying on Suggested Orders Items page
+- Fixed forecast always displaying 0 on Opportunity Buys Item page
+- Fixed refresh icon positioning to match Back button vertical alignment
+- Fixed missing `notfound.png` file in repository (404 error)
 
-### Bug Fixes
-- Fixed duplicate Department display on Items page
-- Fixed header visibility when navigating between pages
-- Fixed status messages persisting after navigation
-- Fixed scrollbar issues (eliminated second scrollbar)
-- Fixed last card visibility on mobile devices
-- Fixed logo display on ORG and Store prompt pages
-- Fixed button overlap with text on mobile
-
-### Documentation
-- **Technical Documentation**: Comprehensive API and technical documentation
-- **User Guide**: End-user focused guide with workflows and tips
-- **Changelog**: This document tracking all version changes
+### Technical Changes
+- Updated `search-planned-purchase` template to include `PK` field
+- Improved null/undefined handling for forecast values (preserves 0 values)
+- Enhanced error handling and logging throughout the application
+- Improved responsive CSS for mobile devices
+- Better separation of Opportunity Buys and Suggested Orders logic
 
 ---
 
-## Version 1.0.0
-
-### Initial Release
-- Basic authentication
-- Store ID input
-- Suggested Orders and Opportunity Buys cards
-- Order listing and item display
-- Quantity modification
-- Order submission
+## Version 1.1.0
+(Previous version - no changelog available)
