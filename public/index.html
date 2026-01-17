@@ -466,6 +466,7 @@
       flex: 1;
       overflow-y: auto;
       min-height: 0; /* Allows flex child to shrink below content size */
+      padding-top: 0.5rem; /* Add padding-top so cards can move up on hover without being cut off */
     }
     
     /* Scrollable cards section styling */
@@ -668,6 +669,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 0.5rem;
+      padding-top: 0.5rem; /* Add padding-top so cards can move up on hover without being cut off */
       padding-bottom: 6rem; /* Increased bottom padding so full last card is visible */
       min-height: 0; /* Critical: Allows flex child to shrink below content size */
       -webkit-overflow-scrolling: touch;

@@ -1428,11 +1428,11 @@ function renderOpportunityBuysCards(items, imageMap = {}) {
     // Initialize quantity from PurchaseQuantity
     const initialQuantity = purchaseQuantity !== '' ? parseFloat(purchaseQuantity) : 0;
     
-    // Get image URL from imageMap, fallback to placeholder
+    // Get image URL from imageMap, fallback to notfound.png
     const imageUrl = imageMap[itemId] || null;
     const imageHtml = imageUrl 
-      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.parentElement.innerHTML='<div class=\'item-image-placeholder\'></div>';" />`
-      : '<div class="item-image-placeholder"></div>';
+      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='notfound.png'; this.onerror=null;" />`
+      : `<img src="notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
     
     // Get InventoryMovementId, PlannedPurchaseId, and PK (PK used for delete API)
     const inventoryMovementId = item.InventoryMovementId || '';
@@ -1915,11 +1915,11 @@ function renderMovementCards(movements, imageMap = {}) {
     // Initialize quantity from FinalOrderUnits
     const initialQuantity = finalOrderUnits !== '' ? parseFloat(finalOrderUnits) : 0;
     
-    // Get image URL from imageMap, fallback to placeholder
+    // Get image URL from imageMap, fallback to notfound.png
     const imageUrl = imageMap[itemId] || null;
     const imageHtml = imageUrl 
-      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.parentElement.innerHTML='<div class=\'item-image-placeholder\'></div>';" />`
-      : '<div class="item-image-placeholder"></div>';
+      ? `<img src="${imageUrl}" alt="${itemId}" class="item-image" onerror="this.src='notfound.png'; this.onerror=null;" />`
+      : `<img src="notfound.png" alt="${itemId}" class="item-image" onerror="this.onerror=null;" />`;
     
     // Get InventoryMovementId (not displayed, but needed for updates)
     const inventoryMovementId = movement.InventoryMovementId || '';
