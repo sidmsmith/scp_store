@@ -312,15 +312,31 @@ export default async function handler(req, res) {
     if (!token) return res.status(401).json({ error: "No token" });
     
     const { sourceLocationId, locationId, itemId } = req.body;
-    if (!sourceLocationId || !locationId) {
-      return res.json({ success: false, error: "sourceLocationId and locationId required" });
+    
+    // For Opportunity Buys: require itemId and locationId (sourceLocationId not needed)
+    // For Suggested Orders: require sourceLocationId and locationId (itemId not needed)
+    if (itemId) {
+      // Opportunity Buys case: use ItemId and LocationId
+      if (!locationId) {
+        return res.json({ success: false, error: "locationId required when itemId is provided" });
+      }
+    } else {
+      // Suggested Orders case: use SourceLocationId and LocationId
+      if (!sourceLocationId || !locationId) {
+        return res.json({ success: false, error: "sourceLocationId and locationId required when itemId is not provided" });
+      }
     }
 
     try {
-      let query = `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`;
+      let query;
       if (itemId) {
+        // Opportunity Buys: Query format is "ItemId='...' AND LocationId='...'"
         query = `ItemId='${itemId}' AND LocationId='${locationId}'`;
+      } else {
+        // Suggested Orders: Query format is "SourceLocationId='...' AND LocationId='...'"
+        query = `SourceLocationId='${sourceLocationId}' AND LocationId='${locationId}'`;
       }
+      
       const searchPayload = {
         Query: query,
         Template: {
