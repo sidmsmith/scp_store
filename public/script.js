@@ -77,6 +77,10 @@ const consoleCloseBtn = document.getElementById('consoleCloseBtn');
 const forecastFileDisplay = document.getElementById('forecastFileDisplay');
 const locationFileDisplay = document.getElementById('locationFileDisplay');
 
+// Upload button elements (may not exist - defined to prevent ReferenceError)
+const uploadForecastBtn = document.getElementById('uploadForecastBtn');
+const uploadLocationBtn = document.getElementById('uploadLocationBtn');
+
 let storeId = null;
 
 // THEME DEFINITIONS
