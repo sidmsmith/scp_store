@@ -546,6 +546,13 @@ function startBarcodeScanner() {
           if (scannerModal) {
             scannerModal.hide();
           }
+          
+          // Automatically submit the Store ID (simulate Enter key press)
+          setTimeout(() => {
+            if (storeIdInput && storeIdInput.value) {
+              submitStoreId();
+            }
+          }, 300); // Small delay to ensure modal is fully closed
         }, 500);
       } else {
         // Show progress but don't accept yet
