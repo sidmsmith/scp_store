@@ -362,7 +362,10 @@ storeIdInput?.addEventListener('keypress', async e => {
 // Barcode Scanner for Store ID - Simplified Basic Implementation
 let scannerRunning = false;
 let lastScanTime = 0;
-const SCAN_DEBOUNCE_MS = 1000; // Prevent rapid successive scans (1 second)
+let lastScannedCode = '';
+let scanCount = 0;
+const SCAN_DEBOUNCE_MS = 500; // Prevent rapid successive scans (500ms)
+const MIN_CONSISTENT_SCANS = 3; // Require same code detected 3 times before accepting
 
 function initBarcodeScanner() {
   if (!scanStoreIdBtn || !barcodeScannerModal) return;
@@ -375,6 +378,8 @@ function initBarcodeScanner() {
   // Open scanner modal
   scanStoreIdBtn.addEventListener('click', () => {
     lastScanTime = 0;
+    lastScannedCode = '';
+    scanCount = 0;
     scannerModal.show();
     setTimeout(() => startBarcodeScanner(), 300);
   });
@@ -484,18 +489,13 @@ function startBarcodeScanner() {
     
     Quagga.start();
     
-    // Simple barcode detection with validation
+    // Barcode detection with consistency validation to prevent false positives
     Quagga.onDetected(function(result) {
       const now = Date.now();
       
-      // Debounce: prevent rapid successive scans
-      if (now - lastScanTime < SCAN_DEBOUNCE_MS) {
-        return;
-      }
-      
       let code = result.codeResult.code;
       
-      // Validate code
+      // Validate code exists
       if (!code) return;
       
       // Trim whitespace
@@ -503,47 +503,70 @@ function startBarcodeScanner() {
       
       // Basic validation: code should have at least 3 characters and be alphanumeric/hyphen/underscore
       if (code.length < 3) {
-        logToConsole(`Invalid barcode (too short): ${code}`, 'warning');
         return;
       }
       
       // Check for valid characters (alphanumeric, hyphen, underscore, colon)
       if (!/^[A-Za-z0-9\-_:]+$/.test(code)) {
-        logToConsole(`Invalid barcode (invalid characters): ${code}`, 'warning');
         return;
       }
       
+      // Debounce: ignore scans too close together
+      if (now - lastScanTime < SCAN_DEBOUNCE_MS) {
+        return;
+      }
+      
+      // Consistency check: require same code detected multiple times
+      if (code === lastScannedCode) {
+        scanCount++;
+      } else {
+        // Reset count if code changed
+        scanCount = 1;
+        lastScannedCode = code;
+      }
+      
       lastScanTime = now;
-      logToConsole(`Barcode scanned: ${code}`, 'success');
       
-      // Stop scanner
-      try {
-        Quagga.stop();
-        Quagga.offDetected();
-        scannerRunning = false;
-      } catch (error) {
-        console.error('Error stopping scanner:', error);
-      }
-      
-      // Fill Store ID input
-      if (storeIdInput) {
-        storeIdInput.value = code;
-        storeIdInput.focus();
-      }
-      
-      // Update status
-      if (scannerStatus) {
-        scannerStatus.textContent = `Scanned: ${code}`;
-        scannerStatus.style.color = 'green';
-      }
-      
-      // Close modal
-      setTimeout(() => {
-        const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
-        if (scannerModal) {
-          scannerModal.hide();
+      // Only accept if we've seen the same code multiple times (prevents false positives)
+      if (scanCount >= MIN_CONSISTENT_SCANS) {
+        logToConsole(`Barcode confirmed: ${code} (detected ${scanCount} times)`, 'success');
+        
+        // Stop scanner
+        try {
+          Quagga.stop();
+          Quagga.offDetected();
+          scannerRunning = false;
+        } catch (error) {
+          console.error('Error stopping scanner:', error);
         }
-      }, 500);
+        
+        // Fill Store ID input
+        if (storeIdInput) {
+          storeIdInput.value = code;
+          storeIdInput.focus();
+        }
+        
+        // Update status
+        if (scannerStatus) {
+          scannerStatus.textContent = `Scanned: ${code}`;
+          scannerStatus.style.color = 'green';
+        }
+        
+        // Close modal
+        setTimeout(() => {
+          const scannerModal = bootstrap.Modal.getInstance(barcodeScannerModal);
+          if (scannerModal) {
+            scannerModal.hide();
+          }
+        }, 500);
+      } else {
+        // Show progress but don't accept yet
+        if (scannerStatus) {
+          scannerStatus.textContent = `Detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS}) - Keep steady...`;
+          scannerStatus.style.color = 'var(--primary)';
+        }
+        logToConsole(`Barcode detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
+      }
     });
   });
 }
