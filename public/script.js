@@ -361,6 +361,8 @@ storeIdInput?.addEventListener('keypress', async e => {
 
 // Barcode Scanner for Store ID - Simplified Basic Implementation
 let scannerRunning = false;
+let lastScanTime = 0;
+const SCAN_DEBOUNCE_MS = 1000; // Prevent rapid successive scans (1 second)
 
 function initBarcodeScanner() {
   if (!scanStoreIdBtn || !barcodeScannerModal) return;
@@ -368,11 +370,11 @@ function initBarcodeScanner() {
   const scannerModal = new bootstrap.Modal(barcodeScannerModal);
   const scannerStatus = document.getElementById('scannerStatus');
   const closeScannerBtn = document.getElementById('closeScannerBtn');
-  const stopScannerBtn = document.getElementById('stopScannerBtn');
   const cancelScannerBtn = document.getElementById('cancelScannerBtn');
   
   // Open scanner modal
   scanStoreIdBtn.addEventListener('click', () => {
+    lastScanTime = 0;
     scannerModal.show();
     setTimeout(() => startBarcodeScanner(), 300);
   });
@@ -393,12 +395,6 @@ function initBarcodeScanner() {
   // Close scanner handlers
   if (closeScannerBtn) {
     closeScannerBtn.addEventListener('click', () => {
-      stopScanner();
-      scannerModal.hide();
-    });
-  }
-  if (stopScannerBtn) {
-    stopScannerBtn.addEventListener('click', () => {
       stopScanner();
       scannerModal.hide();
     });
@@ -488,12 +484,36 @@ function startBarcodeScanner() {
     
     Quagga.start();
     
-    // Simple barcode detection - use first detected code
+    // Simple barcode detection with validation
     Quagga.onDetected(function(result) {
-      const code = result.codeResult.code;
+      const now = Date.now();
       
+      // Debounce: prevent rapid successive scans
+      if (now - lastScanTime < SCAN_DEBOUNCE_MS) {
+        return;
+      }
+      
+      let code = result.codeResult.code;
+      
+      // Validate code
       if (!code) return;
       
+      // Trim whitespace
+      code = code.trim();
+      
+      // Basic validation: code should have at least 3 characters and be alphanumeric/hyphen/underscore
+      if (code.length < 3) {
+        logToConsole(`Invalid barcode (too short): ${code}`, 'warning');
+        return;
+      }
+      
+      // Check for valid characters (alphanumeric, hyphen, underscore, colon)
+      if (!/^[A-Za-z0-9\-_:]+$/.test(code)) {
+        logToConsole(`Invalid barcode (invalid characters): ${code}`, 'warning');
+        return;
+      }
+      
+      lastScanTime = now;
       logToConsole(`Barcode scanned: ${code}`, 'success');
       
       // Stop scanner
