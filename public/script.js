@@ -2882,11 +2882,15 @@ function showSubmissionModal(updatedCount, errorCount) {
   
   if (!modalEl || !messageEl) return;
   
+  // Use correct singular/plural for "line"
+  const lineWord = updatedCount === 1 ? 'line' : 'lines';
+  const errorWord = errorCount === 1 ? 'error' : 'errors';
+  
   let message = '';
   if (errorCount === 0) {
-    message = `Successfully updated ${updatedCount} line(s).`;
+    message = `Successfully updated ${updatedCount} ${lineWord}.`;
   } else {
-    message = `Updated ${updatedCount} line(s) with ${errorCount} error(s). Check console for details.`;
+    message = `Updated ${updatedCount} ${lineWord} with ${errorCount} ${errorWord}. Check console for details.`;
   }
   
   messageEl.textContent = message;
