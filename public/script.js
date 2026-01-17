@@ -359,8 +359,9 @@ storeIdInput?.addEventListener('keypress', async e => {
   await submitStoreId();
 });
 
-// Barcode Scanner for Store ID - Simplified Basic Implementation
+// Barcode and QR Code Scanner for Store ID - Using html5-qrcode
 let scannerRunning = false;
+let html5QrCode = null;
 let lastScanTime = 0;
 let lastScannedCode = '';
 let scanCount = 0;
@@ -386,13 +387,21 @@ function initBarcodeScanner() {
   
   // Stop scanner function
   function stopScanner() {
-    if (scannerRunning && typeof Quagga !== 'undefined') {
+    if (scannerRunning && html5QrCode) {
       try {
-        Quagga.stop();
-        Quagga.offDetected();
-        scannerRunning = false;
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+          scannerRunning = false;
+          html5QrCode = null;
+        }).catch((err) => {
+          console.error('Error stopping scanner:', err);
+          scannerRunning = false;
+          html5QrCode = null;
+        });
       } catch (error) {
         console.error('Error stopping scanner:', error);
+        scannerRunning = false;
+        html5QrCode = null;
       }
     }
   }
@@ -436,64 +445,35 @@ function startBarcodeScanner() {
     scannerStatus.style.color = 'var(--text)';
   }
   
-  if (typeof Quagga === 'undefined') {
+  if (typeof Html5Qrcode === 'undefined') {
     if (scannerStatus) {
-      scannerStatus.textContent = 'Error: Barcode scanner library not loaded';
+      scannerStatus.textContent = 'Error: QR code scanner library not loaded';
       scannerStatus.style.color = 'red';
     }
     return;
   }
   
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: interactiveElement,
-      constraints: {
-        width: { min: 320, ideal: 640, max: 1280 },
-        height: { min: 240, ideal: 480, max: 720 },
-        facingMode: "environment"
-      }
-    },
-    locator: {
-      patchSize: "medium",
-      halfSample: false
-    },
-    numOfWorkers: 2,
-    decoder: {
-      readers: [
-        "code_128_reader",
-        "code_39_reader",
-        "ean_reader",
-        "ean_8_reader",
-        "upc_reader",
-        "upc_e_reader"
-      ]
-    },
-    locate: true
-  }, function(err) {
-    if (err) {
-      if (scannerStatus) {
-        scannerStatus.textContent = 'Error: Could not access camera. ' + (err.message || 'Please check camera permissions.');
-        scannerStatus.style.color = 'red';
-      }
-      logToConsole('Barcode scanner initialization error: ' + err.message, 'error');
-      return;
-    }
-    
-    scannerRunning = true;
-    if (scannerStatus) {
-      scannerStatus.textContent = 'Camera ready. Point at barcode to scan...';
-      scannerStatus.style.color = 'var(--text)';
-    }
-    
-    Quagga.start();
-    
-    // Barcode detection with consistency validation to prevent false positives
-    Quagga.onDetected(function(result) {
+  // Clear any existing content
+  interactiveElement.innerHTML = '';
+  
+  // Create html5-qrcode instance
+  html5QrCode = new Html5Qrcode(interactiveElement.id);
+  
+  const config = {
+    fps: 10,
+    qrbox: { width: 250, height: 250 },
+    aspectRatio: 1.0,
+    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+  };
+  
+  // Start scanning
+  html5QrCode.start(
+    { facingMode: "environment" },
+    config,
+    function(decodedText, decodedResult) {
       const now = Date.now();
       
-      let code = result.codeResult.code;
+      let code = decodedText;
       
       // Validate code exists
       if (!code) return;
@@ -529,15 +509,19 @@ function startBarcodeScanner() {
       
       // Only accept if we've seen the same code multiple times (prevents false positives)
       if (scanCount >= MIN_CONSISTENT_SCANS) {
-        logToConsole(`Barcode confirmed: ${code} (detected ${scanCount} times)`, 'success');
+        logToConsole(`Code confirmed: ${code} (detected ${scanCount} times)`, 'success');
         
         // Stop scanner
-        try {
-          Quagga.stop();
-          Quagga.offDetected();
-          scannerRunning = false;
-        } catch (error) {
-          console.error('Error stopping scanner:', error);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            scannerRunning = false;
+            html5QrCode = null;
+          }).catch((err) => {
+            console.error('Error stopping scanner:', err);
+            scannerRunning = false;
+            html5QrCode = null;
+          });
         }
         
         // Fill Store ID input
@@ -565,9 +549,27 @@ function startBarcodeScanner() {
           scannerStatus.textContent = `Detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS}) - Keep steady...`;
           scannerStatus.style.color = 'var(--primary)';
         }
-        logToConsole(`Barcode detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
+        logToConsole(`Code detected: ${code} (${scanCount}/${MIN_CONSISTENT_SCANS})`, 'info');
       }
-    });
+    },
+    function(errorMessage) {
+      // Ignore scanning errors (they're frequent during scanning)
+    }
+  ).then(() => {
+    scannerRunning = true;
+    if (scannerStatus) {
+      scannerStatus.textContent = 'Camera ready. Point at barcode or QR code to scan...';
+      scannerStatus.style.color = 'var(--text)';
+    }
+    logToConsole('Scanner started successfully', 'success');
+  }).catch((err) => {
+    if (scannerStatus) {
+      scannerStatus.textContent = 'Error: Could not access camera. ' + (err.message || 'Please check camera permissions.');
+      scannerStatus.style.color = 'red';
+    }
+    logToConsole('Scanner initialization error: ' + err.message, 'error');
+    scannerRunning = false;
+    html5QrCode = null;
   });
 }
 
