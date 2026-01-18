@@ -349,9 +349,11 @@ async function submitStoreId() {
     if (cardsHeaderStoreId && storeIdValue) {
       cardsHeaderStoreId.textContent = storeIdValue;
     }
-    // Set Department to N/A initially (will be updated when orders load)
+    // TODO: Revisit Department logic - currently hardcoded to "Produce"
+    // Set Department to "Produce" (hardcoded for now)
+    // Original logic: was set to 'N/A' initially, then updated when orders load
     if (cardsHeaderDepartment) {
-      cardsHeaderDepartment.textContent = 'N/A';
+      cardsHeaderDepartment.textContent = 'Produce';
     }
   
   // Removed: status('Store loaded', 'success');
@@ -692,11 +694,12 @@ async function loadSuggestedOrders() {
     
     // Update header with Department in storeHeaderCards (Store is already there)
     const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
-    // Get Department from first order's SubGroup
-    const firstOrder = orders.length > 0 ? orders[0] : null;
-    const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
+    // TODO: Revisit Department logic - currently hardcoded to "Produce"
+    // Original logic: Get Department from first order's SubGroup
+    // const firstOrder = orders.length > 0 ? orders[0] : null;
+    // const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
     if (cardsHeaderDepartment) {
-      cardsHeaderDepartment.textContent = department;
+      cardsHeaderDepartment.textContent = 'Produce'; // Hardcoded - needs proper logic
     }
     
     // Render order cards
@@ -880,9 +883,11 @@ if (backToCardsBtn) {
       if (cardsHeaderStoreId && storeId) {
         cardsHeaderStoreId.textContent = storeId;
       }
-      // Set Department to N/A initially (will be updated when orders load)
+      // TODO: Revisit Department logic - currently hardcoded to "Produce"
+      // Set Department to "Produce" (hardcoded for now)
+      // Original logic: was set to 'N/A' initially, then updated when orders load
       if (cardsHeaderDepartment) {
-        cardsHeaderDepartment.textContent = 'N/A';
+        cardsHeaderDepartment.textContent = 'Produce';
       }
       
       // Show logo when returning to cards page
