@@ -16,6 +16,7 @@ const orgParam = urlParams.get('ORG'); // Also support ORG parameter
 const businessUnitParam = urlParams.get('BusinessUnit');
 const storeParam = urlParams.get('Store');
 const consoleParam = urlParams.get('Console');
+const themeParam = urlParams.get('theme'); // Theme parameter
 
 // Store URL parameters for use
 const urlLocation = locationParam || null;
@@ -23,6 +24,7 @@ const urlOrg = organizationParam || orgParam || null; // Support both Organizati
 const urlBusinessUnit = businessUnitParam || null;
 const urlStore = storeParam || null;
 const urlConsole = consoleParam || null;
+const urlTheme = themeParam || null;
 
 // Ensure ORG is blank on load (security) unless from URL
 if (urlOrg) {
@@ -119,8 +121,21 @@ function applyTheme(themeKey) {
 }
 
 function loadTheme() {
-  const savedTheme = localStorage.getItem('selectedTheme') || 'dark';
-  applyTheme(savedTheme);
+  // Check URL parameter first, then localStorage, then default
+  let themeToApply = 'light'; // default
+  
+  if (urlTheme && themes[urlTheme]) {
+    // URL parameter takes precedence
+    themeToApply = urlTheme;
+  } else {
+    // Fall back to localStorage
+    const savedTheme = localStorage.getItem('selectedTheme');
+    if (savedTheme && themes[savedTheme]) {
+      themeToApply = savedTheme;
+    }
+  }
+  
+  applyTheme(themeToApply);
 }
 
 function renderThemeList() {
