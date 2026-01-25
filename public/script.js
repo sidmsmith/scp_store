@@ -388,6 +388,9 @@ async function submitStoreId() {
     if (cardsHeaderDepartment) {
       cardsHeaderDepartment.textContent = department != null ? department : '';
     }
+    if (changeStoreBtnCards) {
+      changeStoreBtnCards.style.display = 'block';
+    }
   
   // Removed: status('Store loaded', 'success');
   return true;
@@ -659,13 +662,15 @@ async function loadSuggestedOrders() {
   }
   
   try {
-    // Prepare API payload
+    const subGroupClause = (department != null && String(department).trim() !== '')
+      ? `SubGroup='${String(department).trim()}'`
+      : 'SubGroup=null';
     const apiPayload = {
       org: orgInput?.value.trim() || '',
-      storeId: storeId 
+      storeId: storeId,
+      department: department != null ? department : null
     };
     
-    // Log API call details to console
     logToConsole('\n=== Suggested Orders API Call ===', 'info');
     logToConsole(`Action: search-inventory-movement-summary`, 'info');
     logToConsole(`Endpoint: /ai-inventoryoptimization/api/ai-inventoryoptimization/inventoryMovementSummary/search`, 'info');
@@ -673,21 +678,18 @@ async function loadSuggestedOrders() {
     logToConsole(JSON.stringify(apiPayload, null, 2), 'info');
     logToConsole(`Backend will send payload:`, 'info');
     const backendPayload = {
-      Query: `LocationId='${storeId}'`,
+      Query: `LocationId='${storeId}' AND ${subGroupClause}`,
       Template: {
         LocationId: null,
         SourceLocationId: null,
         SubGroup: null,
         InventoryMovementSummaryId: null,
-        OrderStatus: {
-          OrderStatusId: null
-        },
+        OrderStatus: { OrderStatusId: null },
         MovementSummaryFactors: null
       }
     };
     logToConsole(JSON.stringify(backendPayload, null, 2), 'info');
     
-    // Call API to search inventory movement summary
     const res = await api('search-inventory-movement-summary', apiPayload);
     
     // Log API response to console
@@ -2582,7 +2584,8 @@ if (submitChangesBtn) {
           try {
             const refreshPayload = {
               org: orgInput?.value.trim() || '',
-              storeId: storeId
+              storeId: storeId,
+              department: department != null ? department : null
             };
             
             logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');
@@ -2698,7 +2701,8 @@ if (submitChangesBtn) {
                   // Also refresh order status from orders summary
                   const refreshOrderStatusPayload = {
                     org: orgInput?.value.trim() || '',
-                    storeId: storeId
+                    storeId: storeId,
+                    department: department != null ? department : null
                   };
                   
                   logToConsole(`Action: search-inventory-movement-summary (refresh for Items Page)`, 'info');
@@ -3013,7 +3017,8 @@ function showReleaseOrderModal(success, message) {
           try {
             const refreshPayload = {
               org: orgInput?.value.trim() || '',
-              storeId: storeId
+              storeId: storeId,
+              department: department != null ? department : null
             };
             
             logToConsole(`Action: search-inventory-movement-summary (refresh)`, 'info');

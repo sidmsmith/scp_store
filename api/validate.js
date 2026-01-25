@@ -276,14 +276,18 @@ export default async function handler(req, res) {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: "No token" });
     
-    const { storeId } = req.body;
+    const { storeId, department } = req.body;
     if (!storeId) {
       return res.json({ success: false, error: "No storeId provided" });
     }
 
+    const subGroupClause = (department != null && String(department).trim() !== '')
+      ? `SubGroup='${String(department).trim()}'`
+      : 'SubGroup=null';
+
     try {
       const searchPayload = {
-        Query: `LocationId='${storeId}'`,
+        Query: `LocationId='${storeId}' AND ${subGroupClause}`,
         Template: {
           LocationId: null,
           SourceLocationId: null,
