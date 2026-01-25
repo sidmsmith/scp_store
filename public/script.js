@@ -385,11 +385,8 @@ async function submitStoreId() {
     if (cardsHeaderStoreId && storeIdValue) {
       cardsHeaderStoreId.textContent = storeIdValue;
     }
-    // TODO: Revisit Department logic - currently hardcoded to "Produce"
-    // Set Department to "Produce" (hardcoded for now)
-    // Original logic: was set to 'N/A' initially, then updated when orders load
     if (cardsHeaderDepartment) {
-      cardsHeaderDepartment.textContent = 'Produce';
+      cardsHeaderDepartment.textContent = department != null ? department : '';
     }
   
   // Removed: status('Store loaded', 'success');
