@@ -433,6 +433,17 @@
       justify-content: center;
     }
     
+    .btn-login {
+      background: #d0d0d0;
+      border: 1px solid #b8b8b8;
+      color: #333;
+    }
+    .btn-login:hover {
+      background: #c0c0c0;
+      border-color: #a8a8a8;
+      color: #333;
+    }
+    
     #barcodeScannerContainer {
       position: relative;
     }
@@ -1190,7 +1201,14 @@
             <i class="fas fa-camera"></i>
           </button>
         </div>
-        <small>Press Enter to continue or use camera icon to scan barcode</small>
+        <label class="form-label mt-2">Department:</label>
+        <input type="text" id="departmentInput" class="form-control" placeholder="Enter Department (optional)" autocomplete="off" />
+        <div class="store-id-actions mt-3">
+          <button type="button" class="btn btn-login" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i> Log In
+          </button>
+        </div>
+        <small class="d-block mt-2">Enter Store ID (and optional Department), then press Enter or click Log In. Use camera icon to scan barcode.</small>
       </div>
 
       <!-- Cards Section -->

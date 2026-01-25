@@ -1,6 +1,8 @@
 // public/script.js
 const orgInput = document.getElementById('org');
 const storeIdInput = document.getElementById('storeId');
+const departmentInput = document.getElementById('departmentInput');
+const loginBtn = document.getElementById('loginBtn');
 const scanStoreIdBtn = document.getElementById('scanStoreIdBtn');
 const barcodeScannerModal = document.getElementById('barcodeScannerModal');
 const statusEl = document.getElementById('status');
@@ -84,6 +86,7 @@ const uploadForecastBtn = document.getElementById('uploadForecastBtn');
 const uploadLocationBtn = document.getElementById('uploadLocationBtn');
 
 let storeId = null;
+let department = null;
 
 // THEME DEFINITIONS
 const themes = {
@@ -277,13 +280,31 @@ orgInput?.addEventListener('keypress', async e => {
   await authenticate();
 });
 
-// Store ID submit handler
+// Validate Department: alphanumeric only when non-empty; null/empty allowed
+function validateDepartment(val) {
+  if (!val || !val.trim()) return { ok: true, value: null };
+  const v = val.trim();
+  if (!/^[a-zA-Z0-9]+$/.test(v)) {
+    return { ok: false, value: null };
+  }
+  return { ok: true, value: v };
+}
+
+// Store ID submit handler (Log In)
 async function submitStoreId() {
   const storeIdValue = storeIdInput?.value.trim();
   if (!storeIdValue) {
     status('Store ID required', 'error');
     return false;
   }
+
+  const deptResult = validateDepartment(departmentInput?.value);
+  if (!deptResult.ok) {
+    status('Department must be alphanumeric only', 'error');
+    departmentInput?.focus();
+    return false;
+  }
+  department = deptResult.value;
   
   // Removed: status('Validating store...', 'info');
   
@@ -375,7 +396,18 @@ async function submitStoreId() {
   return true;
 }
 
+async function handleLogin() {
+  await submitStoreId();
+}
+
+loginBtn?.addEventListener('click', handleLogin);
+
 storeIdInput?.addEventListener('keypress', async e => {
+  if (e.key !== 'Enter') return;
+  await submitStoreId();
+});
+
+departmentInput?.addEventListener('keypress', async e => {
   if (e.key !== 'Enter') return;
   await submitStoreId();
 });
@@ -707,14 +739,10 @@ async function loadSuggestedOrders() {
     // Removed: status(`Found ${orders.length} suggested order(s)`, 'success');
     logToConsole(`Loaded ${orders.length} suggested order(s)`, 'success');
     
-    // Update header with Department in storeHeaderCards (Store is already there)
+    // Keep Department from user entry (storeHeaderCards already shows it)
     const cardsHeaderDepartment = document.getElementById('cardsHeaderDepartment');
-    // TODO: Revisit Department logic - currently hardcoded to "Produce"
-    // Original logic: Get Department from first order's SubGroup
-    // const firstOrder = orders.length > 0 ? orders[0] : null;
-    // const department = firstOrder?.SubGroup || firstOrder?.Subgroup || 'N/A';
     if (cardsHeaderDepartment) {
-      cardsHeaderDepartment.textContent = 'Produce'; // Hardcoded - needs proper logic
+      cardsHeaderDepartment.textContent = department != null ? department : '';
     }
     
     // Render order cards
@@ -840,10 +868,14 @@ function handleChangeStore() {
     cardsSection.style.display = 'none';
   }
   
-  // Clear store ID to allow re-entry
+  // Clear store ID and department to allow re-entry
   storeId = null;
+  department = null;
   if (storeIdInput) {
     storeIdInput.value = '';
+  }
+  if (departmentInput) {
+    departmentInput.value = '';
   }
   
   // Removed: status('Enter a new Store ID', 'info');
@@ -898,11 +930,8 @@ if (backToCardsBtn) {
       if (cardsHeaderStoreId && storeId) {
         cardsHeaderStoreId.textContent = storeId;
       }
-      // TODO: Revisit Department logic - currently hardcoded to "Produce"
-      // Set Department to "Produce" (hardcoded for now)
-      // Original logic: was set to 'N/A' initially, then updated when orders load
       if (cardsHeaderDepartment) {
-        cardsHeaderDepartment.textContent = 'Produce';
+        cardsHeaderDepartment.textContent = department != null ? department : '';
       }
       
       // Show logo when returning to cards page
