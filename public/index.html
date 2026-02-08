@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>SCP Store v1.3.1</title>
+  <link rel="icon" href="data:,">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --input-bg: #2d2d2d;
+      --border: #333;
+      --text: #e0e0e0;
+      --text-secondary: #bbbbbb;
+      --text-muted: #999;
+      --primary: #0d6efd;
+      --primary-hover: #0b5ed7;
+      --success: #28a745;
+      --success-hover: #218838;
+      --danger: #dc3545;
+      --danger-hover: #c82333;
+      --workspace-bg: #181818;
+      --workspace-border: #2f2f2f;
+      --workspace-unlocked: #0d6efd;
+      --pre-bg: #252525;
+      --pre-border: #444;
+      --pre-text: #c8c8c8;
+    }
+    
+    /* Manhattan Theme - Using Order Generator colors for better readability */
+    :root.theme-manhattan {
+      --bg-dark: rgb(45, 47, 59);
+      --card-bg: #484e5e;
+      --input-bg: #282c34;
+      --border: #333;
+      --text: #e0e0e0; /* Order Generator text color */
+      --text-secondary: #bbbbbb; /* Order Generator form-label color */
+      --text-muted: #999; /* Order Generator small text color */
+      --primary: #0d6efd; /* Order Generator primary button color */
+      --primary-hover: #0b5ed7; /* Order Generator primary hover */
+      --success: #28a745; /* Order Generator success button color */
+      --success-hover: #218838; /* Order Generator success hover */
+      --danger: #dc3545;
+      --danger-hover: #c82333;
+      --workspace-bg: #282c34;
+      --workspace-border: #333;
+      --workspace-unlocked: #0d6efd; /* Use Order Generator primary */
+      --pre-bg: #282c34;
+      --pre-border: #333;
+      --pre-text: #e0e0e0; /* Order Generator text color */
+    }
+    
+    /* Light Theme - White background with white cards and shadows */
+    :root.theme-light {
+      --bg-dark: #f5f5f5;
+      --card-bg: #ffffff;
+      --input-bg: #ffffff;
+      --border: #e0e0e0;
+      --text: #333333;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --primary: #0d6efd;
+      --primary-hover: #0b5ed7;
+      --success: #28a745;
+      --success-hover: #218838;
+      --danger: #dc3545;
+      --danger-hover: #c82333;
+      --workspace-bg: #ffffff;
+      --workspace-border: #e0e0e0;
+      --workspace-unlocked: #0d6efd;
+      --pre-bg: #f5f5f5;
+      --pre-border: #e0e0e0;
+      --pre-text: #333333;
+    }
+    
+    html {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent page-level scrolling */
+    }
+    
+    body {
+      height: 100vh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent page-level scrolling */
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      position: fixed; /* Prevent any scrolling */
+    }
+    
+    /* Mobile-first container */
+    .container {
+      max-width: 100%;
+      padding: 0.5rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      flex: 1;
+      min-height: 0; /* Critical for flexbox scrolling */
+    }
+    
+    /* Mobile-first card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0; /* Critical for flexbox scrolling */
+      overflow: hidden;
+      flex: 1;
+    }
+    
+    /* Light theme: White cards with enhanced shadows */
+    :root.theme-light .card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid #e0e0e0;
+      background: #ffffff;
+    }
+    
+    /* Light theme: Modal styling */
+    :root.theme-light .modal-content {
+      background-color: #ffffff;
+      color: #333333;
+      border: 1px solid #e0e0e0;
+    }
+    
+    :root.theme-light .modal-header,
+    :root.theme-light .modal-footer {
+      border-color: #e0e0e0;
+    }
+    
+    :root.theme-light .list-group-item {
+      background-color: #f9f9f9;
+      border-color: #e0e0e0;
+      color: #333333;
+    }
+    
+    :root.theme-light .list-group-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    :root.theme-light .list-group-item.active {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    
+    /* Mobile-first title */
+    h2 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Mobile-first form controls */
+    .form-control, .form-select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 1rem;
+    }
+    
+    /* Light theme: White inputs with border */
+    :root.theme-light .form-control,
+    :root.theme-light .form-select {
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
+      color: #333333;
+    }
+    
+    :root.theme-light .form-control:focus,
+    :root.theme-light .form-select:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .btn-success { background: var(--success); border: none; }
+    .btn-danger { background: var(--danger); border: none; }
+    .btn-success:hover { background: var(--success-hover); }
+    .btn-danger:hover { background: var(--danger-hover); }
+    
+    /* Manhattan theme: All buttons use blue color */
+    /* Manhattan theme button colors from Order Generator */
+    :root.theme-manhattan .btn-primary {
+      background: #0d6efd !important; /* Order Generator primary */
+      border-color: #0d6efd !important;
+    }
+    :root.theme-manhattan .btn-primary:hover {
+      background: #0b5ed7 !important; /* Order Generator primary hover */
+      border-color: #0b5ed7 !important;
+    }
+    :root.theme-manhattan .btn-success {
+      background: #28a745 !important; /* Order Generator success */
+      border-color: #28a745 !important;
+    }
+    :root.theme-manhattan .btn-success:hover {
+      background: #218838 !important; /* Order Generator success hover */
+      border-color: #218838 !important;
+    }
+    
+    .status { 
+      min-height: 1.5em; 
+      font-weight: 500; 
+      flex-shrink: 0; /* Keep status at bottom, don't scroll */
+      margin-top: auto; /* Push to bottom */
+      padding-top: 0.5rem;
+    }
+    
+    /* Sections that should not scroll - prevent shrinking */
+    #logoContainer,
+    #mainTitle,
+    #storeHeaderCards,
+    #authSection,
+    .store-id-section,
+    #storeHeader,
+    #itemsHeader,
+    .submit-button-container,
+    #consoleToggleContainer,
+    #consoleSection,
+    .d-flex.mb-3,
+    .d-flex.mb-2 {
+      flex-shrink: 0; /* Prevent these from shrinking */
+    }
+    
+    /* Ensure loading/empty states don't interfere with scrolling */
+    #ordersLoading,
+    #ordersEmpty,
+    #movementsLoading,
+    #movementsEmpty {
+      flex-shrink: 0;
+    }
+    .workspace {
+      background: var(--workspace-bg);
+      border: 2px dashed var(--workspace-border);
+      border-radius: 12px;
+      min-height: 300px;
+      transition: border-color 0.2s ease;
+    }
+    .workspace.unlocked {
+      border-color: var(--workspace-unlocked);
+    }
+    pre {
+      background: var(--pre-bg);
+      border: 1px solid var(--pre-border);
+      color: var(--pre-text);
+      padding: 1rem;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow: auto;
+      font-size: 0.9em;
+      font-family: 'Consolas', monospace;
+    }
+    .form-label {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    /* Manhattan theme form-label uses Order Generator color */
+    :root.theme-manhattan .form-label {
+      color: #bbbbbb !important; /* Order Generator form-label color */
+    }
+    small { color: var(--text-muted); }
+    h2 { color: var(--primary); }
+    
+    /* THEME SELECTOR - Mobile-first - Hidden for now */
+    .theme-selector-btn {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      /* Hidden theme selector - can be re-enabled by uncommenting HTML button
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: #e0e0e0;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 1.25rem;
+      z-index: 1000;
+      transition: transform 0.2s;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      */
+    }
+    
+    /* Hidden theme selector hover - commented out
+    .theme-selector-btn:hover {
+      transform: rotate(90deg);
+    }
+    
+    Light theme: Darker icon for visibility
+    :root.theme-light .theme-selector-btn {
+      color: #666666;
+    }
+    
+    :root.theme-manhattan .theme-selector-btn {
+      color: #e0e0e0;
+    }
+    
+    :root.theme-manhattan .theme-selector-btn:hover,
+    :root.theme-light .theme-selector-btn:hover {
+      opacity: 1 !important;
+    }
+    
+    Responsive theme button
+    @media (min-width: 768px) {
+      .theme-selector-btn {
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+      }
+    }
+    */
+    
+    /* Modal styling */
+    .modal-content {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .modal-header, .modal-footer {
+      border-color: var(--border);
+    }
+    .list-group-item {
+      background-color: var(--input-bg);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .list-group-item:hover {
+      background-color: var(--card-bg);
+    }
+    .list-group-item.active {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Console Output */
+    .console-output {
+      background: #000;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8em;
+      padding: 0.75rem;
+      height: 300px;
+      overflow-y: auto;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .console-output .error { color: #ff6b6b; }
+    .console-output .success { color: #51cf66; }
+    .console-output .info { color: #339af0; }
+    .console-output .warning { color: #ffd43b; }
+
+    /* Manhattan theme: Console title */
+    :root.theme-manhattan #consoleSection h5 {
+      color: #bbbbbb !important; /* Same as form-label color */
+    }
+    
+    /* Manhattan Logo - Mobile-first sizing */
+    .manhattan-logo {
+      display: block;
+      margin: 0 auto 1.5rem;
+      max-width: 150px;
+      width: 80%;
+      height: auto;
+    }
+    
+    /* Responsive logo sizing for larger screens */
+    @media (min-width: 768px) {
+      .manhattan-logo {
+        max-width: 200px;
+        margin-bottom: 2rem;
+      }
+    }
+    
+    /* Store ID Input Section */
+    .store-id-section {
+      margin-bottom: 2rem;
+    }
+    
+    .store-id-section .input-group {
+      display: flex;
+      align-items: stretch;
+    }
+    
+    .store-id-section .input-group .form-control {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      flex: 1;
+    }
+    
+    .store-id-section .input-group .btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-left: none;
+      min-width: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #barcodeScannerContainer {
+      position: relative;
+    }
+    
+    #interactive {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    #interactive video,
+    #interactive canvas {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+    }
+    
+    canvas.drawingBuffer {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    
+    #scannerStatus {
+      min-height: 24px;
+      font-size: 0.9375rem;
+    }
+    
+    /* Cards Section */
+    .cards-section {
+      margin-top: 2rem;
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0; /* Allows flex child to shrink below content size */
+      padding-top: 0.5rem; /* Add padding-top so cards can move up on hover without being cut off */
+    }
+    
+    /* Scrollable cards section styling */
+    .cards-section::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .cards-section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .cards-section::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    
+    .cards-section::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+    
+    .option-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: relative;
+      min-height: 60px;
+    }
+    
+    /* Light theme: White cards with enhanced shadows */
+    :root.theme-light .option-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .option-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border-color: var(--primary);
+    }
+    
+    /* Light theme: Hover effect with shadow */
+    :root.theme-light .option-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--primary);
+    }
+    
+    /* Mobile-responsive card padding */
+    @media (min-width: 768px) {
+      .option-card {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        gap: 1rem;
+      }
+    }
+    
+    .option-card-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    /* Responsive icon sizing */
+    @media (min-width: 768px) {
+      .option-card-icon {
+        width: 40px;
+        height: 40px;
+      }
+    }
+    
+    .option-card-text {
+      flex: 1;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    /* Responsive text sizing */
+    @media (min-width: 768px) {
+      .option-card-text {
+        font-size: 1.25rem;
+      }
+    }
+    
+    .option-card-arrow {
+      color: #666;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    
+    /* Light theme: Darker arrow for contrast */
+    :root.theme-light .option-card-arrow {
+      color: #666666;
+    }
+    
+    /* Responsive arrow sizing */
+    @media (min-width: 768px) {
+      .option-card-arrow {
+        font-size: 1.25rem;
+      }
+    }
+    
+    /* Suggested Orders Section */
+    .suggested-orders-section {
+      margin-top: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    /* Store Header */
+    .store-header {
+      margin-bottom: 1rem;
+      flex-shrink: 0; /* Prevent header from shrinking */
+    }
+    
+    .store-header span {
+      color: var(--text);
+    }
+    
+    /* Responsive store header */
+    @media (min-width: 768px) {
+      .store-header {
+        font-size: 1.125rem;
+      }
+    }
+    
+    /* Mobile: Move buttons to top-right corner of screen (viewport) with 10% width */
+    @media (max-width: 767px) {
+      .department-header-row {
+        padding-right: 0; /* Remove padding since button is in corner */
+      }
+      
+      .status-header-row {
+        padding-right: 0; /* Remove padding since button is in corner */
+      }
+      
+      /* Position buttons in top-right corner of viewport (screen) on mobile */
+      #changeStoreBtnCards,
+      #backToOrdersBtn,
+      #backToCardsBtn {
+        position: fixed !important;
+        top: 1rem !important; /* Moved down a few pixels from top */
+        right: 1rem !important; /* Moved left a bit from right edge */
+        transform: none !important;
+        width: 10% !important;
+        min-width: 60px; /* Ensure button is still usable */
+        max-width: 80px;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        z-index: 1000; /* Ensure buttons are above other content */
+      }
+      
+      /* Position refresh button in top-left corner of viewport (screen) on mobile */
+      #refreshOrdersBtn {
+        position: fixed !important;
+        top: 1rem !important; /* Same vertical position as Back button */
+        left: 1rem !important; /* Left side of screen */
+        transform: none !important;
+        width: 10% !important;
+        min-width: 60px; /* Ensure button is still usable */
+        max-width: 80px;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        z-index: 1000; /* Ensure button is above other content */
+      }
+      
+      /* Remove top padding from header containers since buttons are fixed */
+      .store-header-cards {
+        padding-top: 0;
+      }
+      
+      #itemsHeaderContainer {
+        padding-top: 0;
+      }
+      
+      /* Mobile: Additional bottom padding for Items page to show full last card */
+      #movementsContainer.orders-container {
+        padding-bottom: 10rem !important; /* Extra padding on mobile for Items page */
+      }
+    }
+    
+    /* Orders Container - Scrollable */
+    .orders-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 0.5rem;
+      padding-top: 0.5rem; /* Add padding-top so cards can move up on hover without being cut off */
+      padding-bottom: 6rem; /* Increased bottom padding so full last card is visible */
+      min-height: 0; /* Critical: Allows flex child to shrink below content size */
+      -webkit-overflow-scrolling: touch;
+      max-height: 100%; /* Ensure it doesn't exceed parent */
+      /* Ensure content can scroll to show last card fully */
+      scroll-padding-bottom: 1.5rem;
+    }
+    
+    /* Mobile-first scrollbar styling */
+    .orders-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .orders-container::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+      border-radius: 4px;
+    }
+    
+    .orders-container::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    
+    .orders-container::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+    
+    /* Light theme scrollbar */
+    :root.theme-light .orders-container::-webkit-scrollbar-track {
+      background: #f5f5f5;
+    }
+    
+    :root.theme-light .orders-container::-webkit-scrollbar-thumb {
+      background: #d0d0d0;
+    }
+    
+    :root.theme-light .orders-container::-webkit-scrollbar-thumb:hover {
+      background: #999999;
+    }
+    
+    /* Order Card */
+    .order-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Light theme: White order cards with shadows */
+    :root.theme-light .order-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border-color: var(--primary);
+    }
+    
+    :root.theme-light .order-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--primary);
+    }
+    
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    
+    .order-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+    
+    .order-card-id {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    
+    .order-card-details {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    
+    .order-card-detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+    
+    .order-card-detail-label {
+      font-weight: 500;
+    }
+    
+    .order-card-detail-value {
+      color: var(--text);
+    }
+    
+    /* Order Card Totals Section */
+    .order-card-totals {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .order-card-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .order-card-total-label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .order-card-total-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    /* Light theme: Totals styling */
+    :root.theme-light .order-card-totals {
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    /* Responsive order card sizing */
+    @media (min-width: 768px) {
+      .order-card {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      .order-card-title {
+        font-size: 1.125rem;
+      }
+      
+      .orders-container {
+        max-height: calc(100vh - 250px);
+      }
+    }
+    
+    /* Item Card (for inventory movement items) */
+    .item-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Light theme: White item cards with shadows */
+    :root.theme-light .item-card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border-color: var(--primary);
+    }
+    
+    :root.theme-light .item-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--primary);
+    }
+    
+    .item-card-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+      min-height: 100px;
+    }
+    
+    .item-card-left {
+      flex-shrink: 0;
+      align-self: center;
+    }
+    
+    .item-image-placeholder {
+      width: 60px;
+      height: 60px;
+      background: #e8e8e8;
+      border-radius: 8px;
+      border: 1px dashed #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    
+    :root.theme-light .item-image-placeholder {
+      background: #f5f5f5;
+      border-color: #d0d0d0;
+    }
+    
+    .item-image {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: var(--card-bg);
+      flex-shrink: 0;
+    }
+    
+    @media (min-width: 768px) {
+      .item-image {
+        width: 80px;
+        height: 80px;
+      }
+    }
+    
+    .item-card-center {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .item-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+    
+    .item-card-details {
+      margin-left: 0.5rem;
+    }
+    
+    .item-detail-line {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      line-height: 1.5;
+    }
+    
+    .item-card-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    
+    /* Quantity Control Pill */
+    .item-quantity-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: var(--primary);
+      border-radius: 50px;
+      width: fit-content;
+    }
+    
+    .quantity-pill-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+      padding: 0;
+    }
+    
+    .quantity-pill-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .quantity-pill-btn:active {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .quantity-pill-btn i {
+      font-size: 0.875rem;
+    }
+    
+    .quantity-pill-remove i {
+      font-size: 0.875rem;
+    }
+    
+    .quantity-pill-text {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      min-width: 50px;
+      text-align: center;
+      user-select: none;
+    }
+    
+    /* Responsive item card sizing */
+    @media (min-width: 768px) {
+      .item-card {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      .item-card-title {
+        font-size: 1.125rem;
+      }
+      
+      .item-image-placeholder {
+        width: 80px;
+        height: 80px;
+      }
+      
+      .quantity-pill-btn {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .quantity-pill-text {
+        font-size: 1rem;
+        min-width: 60px;
+      }
+    }
+    
+    /* Submit Button Container - Sticky at bottom */
+    .submit-button-container {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-dark);
+      padding: 1rem 0;
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: nowrap; /* Force single line on mobile */
+    }
+    
+    /* On very small screens, reduce gap and padding */
+    @media (max-width: 374px) {
+      .submit-button-container {
+        gap: 0.5rem;
+        padding: 0.75rem 0.5rem;
+      }
+    }
+    
+    :root.theme-light .submit-button-container {
+      background: #f5f5f5;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    #submitChangesBtn {
+      min-width: 0; /* Allow buttons to shrink below 120px on very small screens */
+      max-width: 50%;
+      flex: 1;
+      font-weight: 600;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.75rem; /* Smaller base font for very small screens */
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    #submitChangesBtn:hover {
+      background: var(--success-hover) !important;
+      border-color: var(--success-hover) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    #releaseOrderBtn {
+      min-width: 0; /* Allow buttons to shrink below 120px on very small screens */
+      max-width: 50%;
+      flex: 1;
+      font-weight: 600;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.75rem; /* Smaller base font for very small screens */
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    #releaseOrderBtn:hover {
+      background: var(--success-hover) !important;
+      border-color: var(--success-hover) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    /* On small screens (iPhone SE, etc.), use even smaller font and padding */
+    @media (min-width: 375px) {
+      #submitChangesBtn,
+      #releaseOrderBtn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem; /* 13px */
+      }
+    }
+    
+    /* On medium screens, allow buttons to be slightly wider */
+    @media (min-width: 480px) {
+      #submitChangesBtn,
+      #releaseOrderBtn {
+        min-width: 120px;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem; /* 14px */
+      }
+    }
+    
+    /* On larger screens, allow buttons to be even wider */
+    @media (min-width: 768px) {
+      #submitChangesBtn,
+      #releaseOrderBtn {
+        min-width: 140px;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.9375rem; /* 15px */
+      }
+    }
+    
+    /* Adjust orders container to account for sticky submit button */
+    /* Inventory Movement Section - Scrollable layout */
+    .inventory-movement-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    .inventory-movement-section .orders-container {
+      padding-bottom: 1rem;
+      margin-bottom: 0;
+    }
+    
+    .option-card:hover .option-card-arrow {
+      color: var(--primary);
+    }
+  </style>
+</head>
+  <body>
+  <div class="container">
+    <div class="card p-4">
+      <button class="theme-selector-btn" id="themeSelectorBtn" title="Select Theme">
+        <i class="fas fa-cog"></i>
+      </button>
+      
+      <!-- Theme Selector Button - Hidden for now -->
+      <!--
+      <button class="theme-selector-btn" id="themeSelectorBtn" title="Select Theme">
+        <i class="fas fa-cog"></i>
+      </button>
+      -->
+
+      <!-- Manhattan Logo -->
+      <div id="logoContainer" style="display:none;">
+        <img src="/manhattan-logo.png" alt="Manhattan Associates" class="manhattan-logo" />
+      </div>
+
+      <h2 id="mainTitle" class="text-center mb-4">SCP Store v1.3.1</h2>
+      
+      <!-- Store Header for Cards Page -->
+      <div id="storeHeaderCards" class="store-header-cards mb-2" style="display:none; position: relative;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 0.25rem;">
+          <span>Store: <span id="cardsHeaderStoreId"></span></span>
+        </div>
+        <div class="department-header-row" style="font-size: 1.125rem; font-weight: 600; color: var(--text); text-align: center; position: relative;">
+          <span>Department: <span id="cardsHeaderDepartment"></span></span>
+          <button class="btn btn-sm btn-outline-secondary" id="changeStoreBtnCards" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+
+      <div id="authSection" class="mb-3">
+        <label class="form-label">ORG:</label>
+        <input type="text" id="org" class="form-control" placeholder="Enter ORG" />
+        <small>Press Enter to authenticate</small>
+      </div>
+
+      <!-- Store ID Input Section -->
+      <div id="storeIdSection" class="store-id-section mb-3" style="display:none;">
+        <label class="form-label">Store ID:</label>
+        <div class="input-group">
+          <input type="text" id="storeId" class="form-control" placeholder="Enter Store ID" />
+          <button type="button" class="btn btn-outline-primary" id="scanStoreIdBtn" title="Scan Barcode">
+            <i class="fas fa-camera"></i>
+          </button>
+        </div>
+        <small>Press Enter to continue or use camera icon to scan barcode</small>
+      </div>
+
+      <!-- Cards Section -->
+      <div id="cardsSection" class="cards-section" style="display:none;">
+        <div class="option-card" id="suggestedOrdersCard">
+          <div class="option-card-icon">
+            <i class="fas fa-clipboard-list" style="color: var(--primary); font-size: 1.5rem;"></i>
+          </div>
+          <div class="option-card-text">Suggested Orders</div>
+          <div class="option-card-arrow">
+            <i class="fas fa-chevron-right"></i>
+          </div>
+        </div>
+        <div class="option-card" id="opportunityBuysCard">
+          <div class="option-card-icon">
+            <i class="fas fa-tags" style="color: var(--primary); font-size: 1.5rem;"></i>
+          </div>
+          <div class="option-card-text">Opportunity Buys</div>
+          <div class="option-card-arrow">
+            <i class="fas fa-chevron-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggested Orders Section -->
+      <div id="suggestedOrdersSection" class="suggested-orders-section" style="display:none;">
+        <div style="flex-shrink: 0; position: relative; min-height: 2.5rem; margin-bottom: 0.25rem;">
+          <button class="btn btn-sm btn-outline-secondary" id="refreshOrdersBtn" type="button" title="Refresh Orders" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%);">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" id="backToCardsBtn" type="button" style="display:none; position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div id="ordersContainer" class="orders-container">
+          <!-- Order cards will be dynamically inserted here -->
+        </div>
+        <div id="ordersLoading" class="text-center py-4" style="display:none; flex-shrink: 0;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2" style="color: var(--text-muted);">Loading orders...</p>
+        </div>
+        <div id="ordersEmpty" class="text-center py-4" style="display:none; flex-shrink: 0;">
+          <p style="color: var(--text-muted);">No suggested orders found.</p>
+        </div>
+      </div>
+
+      <!-- Inventory Movement Items Section -->
+      <div id="inventoryMovementSection" class="inventory-movement-section" style="display:none;">
+        <!-- Header with Source and Order Status - displayed via itemsHeaderContainer -->
+        <div id="itemsHeaderContainer" style="display: none; margin-bottom: 0.5rem; text-align: center; position: relative;">
+          <div class="status-header-row" style="font-size: 1.125rem; font-weight: 600; color: var(--text); position: relative;">
+            <div style="margin-bottom: 0.25rem;">
+              <span>Source: <span id="itemsHeaderSource"></span></span>
+            </div>
+            <div>
+              <span>Order Status: <span id="itemsHeaderOrderStatus"></span></span>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="backToOrdersBtn" type="button" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%);">
+              <i class="fas fa-arrow-left"></i> Back
+            </button>
+          </div>
+        </div>
+        <div id="movementsContainer" class="orders-container">
+          <!-- Movement cards will be dynamically inserted here -->
+        </div>
+        <div id="movementsLoading" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2" style="color: var(--text-muted);">Loading items...</p>
+        </div>
+        <div id="movementsEmpty" class="text-center py-4" style="display:none;">
+          <p style="color: var(--text-muted);">No items found.</p>
+        </div>
+        <!-- Submit and Release Order Buttons - Sticky at bottom -->
+        <div class="submit-button-container">
+          <button class="btn btn-success btn-lg" id="submitChangesBtn" type="button" style="display:none;">
+            <i class="fas fa-check"></i> Update
+          </button>
+          <button class="btn btn-primary btn-lg" id="releaseOrderBtn" type="button" style="display:none; margin-left: 1rem;">
+            <i class="fas fa-paper-plane"></i> Release Order
+          </button>
+        </div>
+      </div>
+
+      <!-- Console Toggle Button -->
+      <div class="text-center mt-3" id="consoleToggleContainer" style="display:none;">
+        <button class="btn btn-sm btn-outline-secondary" id="consoleToggleBtn" type="button" title="Toggle Console">
+          <i class="fas fa-terminal" id="consoleToggleIcon"></i> Console
+        </button>
+      </div>
+
+      <!-- Console Window -->
+      <div id="consoleSection" class="mt-4" style="display:none;">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Console</h5>
+            <button class="btn btn-sm btn-outline-secondary" id="consoleCloseBtn" type="button" title="Hide Console">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="console-output" id="console"></div>
+        </div>
+      </div>
+
+      <div class="status text-center mt-4" id="status"></div>
+    </div>
+  </div>
+
+  <!-- THEME SELECTOR MODAL -->
+  <div class="modal fade" id="themeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Select Theme</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="list-group" id="themeList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMISSION COMPLETE MODAL -->
+  <div class="modal fade" id="submissionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Submission Complete</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="submissionModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELEASE ORDER COMPLETE MODAL -->
+  <div class="modal fade" id="releaseOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="releaseOrderModalTitle">Release Order</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="releaseOrderModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="releaseOrderModalOkBtn" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARCODE SCANNER MODAL -->
+  <div class="modal fade" id="barcodeScannerModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Scan Barcode</h5>
+          <button type="button" class="btn-close btn-close-white" id="closeScannerBtn"></button>
+        </div>
+        <div class="modal-body">
+          <div id="barcodeScannerContainer" style="width: 100%; height: 400px; background: #000; border-radius: 8px; position: relative; overflow: hidden;">
+            <div id="interactive" style="width: 100%; height: 100%;"></div>
+            <div style="position: absolute; top: 10px; left: 10px; right: 10px; text-align: center; color: #fff; background: rgba(0,0,0,0.7); padding: 0.5rem; border-radius: 4px;">
+              <small>Position barcode in front of camera</small>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p id="scannerStatus" class="text-center" style="color: var(--text);">Initializing camera...</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelScannerBtn" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
